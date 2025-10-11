@@ -1,0 +1,43 @@
+# Environment files
+.env
+.env.local
+.env.development
+.env.production
+
+# Sensitive configuration
+appsettings.Production.json
+appsettings.Local.json
+
+# Database files
+*.db
+*.sqlite
+*.sqlite3
+
+# Logs
+logs/
+*.log
+
+# Build outputs
+bin/
+obj/
+out/
+
+# Visual Studio
+.vs/
+*.user
+*.suo
+
+# JetBrains Rider
+.idea/
+
+# Uploads
+uploads/
+wwwroot/uploads/
+
+# Temporary files
+*.tmp
+*.temp
+
+# OS generated files
+.DS_Store
+Thumbs.db
