@@ -8,7 +8,7 @@ namespace drTech_backend.Infrastructure
         public AppDbContext CreateDbContext(string[] args)
         {
             var optionsBuilder = new DbContextOptionsBuilder<AppDbContext>();
-            var conn = Environment.GetEnvironmentVariable("DRTECH_PG") ?? "Host=localhost;Database=dr-tech;Username=postgres;Password=igramlol123";
+            var conn = Environment.GetEnvironmentVariable("POSTGRES_CONNECTION_STRING");
             optionsBuilder.UseNpgsql(conn);
             return new AppDbContext(optionsBuilder.Options);
         }

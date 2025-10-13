@@ -2,6 +2,7 @@ using AutoMapper;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
+using drTech_backend.Infrastructure.Auth;
 
 namespace drTech_backend.Infrastructure
 {
@@ -20,10 +21,6 @@ namespace drTech_backend.Infrastructure
                 if (!string.IsNullOrWhiteSpace(pg))
                 {
                     options.UseNpgsql(pg);
-                }
-                else
-                {
-                    options.UseSqlServer(configuration.GetConnectionString("SqlServer") ?? "Server=(localdb)\\mssqllocaldb;Database=drTech;Trusted_Connection=True;");
                 }
             });
 
@@ -67,6 +64,9 @@ namespace drTech_backend.Infrastructure
                 new Abstractions.DatabaseService<Domain.Entities.AuditLog>(dbProvider, provider));
 
             services.Configure<Middleware.ThrottlingOptions>(configuration.GetSection("Throttling"));
+
+            // Auth services
+            services.AddScoped<IJwtTokenService, JwtTokenService>();
 
             // Mongo
             services.Configure<Mongo.MongoSettings>(configuration.GetSection("Mongo"));

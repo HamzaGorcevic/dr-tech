@@ -133,8 +133,17 @@ namespace drTech_backend
 
             app.MapControllers();
 
-            app.MigrateAndSeedAsync(app.Services.GetRequiredService<ILoggerFactory>().CreateLogger("Seeder")).GetAwaiter().GetResult();
-            drTech_backend.Infrastructure.Bootstrap.NoSqlBootstrapper.InitializeAsync(app, app.Services.GetRequiredService<ILoggerFactory>().CreateLogger("Bootstrap")).GetAwaiter().GetResult();
+            var activeProvider = (builder.Configuration["DatabaseProvider"] ?? "PostgreSQL").Trim();
+            if (string.Equals(activeProvider, "PostgreSQL", StringComparison.OrdinalIgnoreCase))
+            {
+                app.MigrateAndSeedAsync(app.Services.GetRequiredService<ILoggerFactory>().CreateLogger("Seeder")).GetAwaiter().GetResult();
+            }
+
+            if (string.Equals(activeProvider, "MongoDB", StringComparison.OrdinalIgnoreCase) ||
+                string.Equals(activeProvider, "Neo4j", StringComparison.OrdinalIgnoreCase))
+            {
+                drTech_backend.Infrastructure.Bootstrap.NoSqlBootstrapper.InitializeAsync(app, app.Services.GetRequiredService<ILoggerFactory>().CreateLogger("Bootstrap")).GetAwaiter().GetResult();
+            }
 
             app.Run();
         }

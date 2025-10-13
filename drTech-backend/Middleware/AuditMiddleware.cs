@@ -9,7 +9,7 @@ namespace drTech_backend.Middleware
             _next = next;
         }
 
-        public async Task Invoke(HttpContext context, Infrastructure.AppDbContext db)
+        public async Task Invoke(HttpContext context, Infrastructure.Abstractions.IDatabaseService<Domain.Entities.AuditLog> auditService)
         {
             await _next(context);
             if (HttpMethods.IsPost(context.Request.Method) || HttpMethods.IsPut(context.Request.Method) || HttpMethods.IsDelete(context.Request.Method))
@@ -24,8 +24,8 @@ namespace drTech_backend.Middleware
                     StatusCode = context.Response.StatusCode,
                     OccurredAtUtc = DateTime.UtcNow
                 };
-                db.AuditLogs.Add(entry);
-                await db.SaveChangesAsync();
+                await auditService.AddAsync(entry);
+                await auditService.SaveChangesAsync();
             }
         }
     }

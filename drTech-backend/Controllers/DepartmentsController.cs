@@ -33,7 +33,7 @@ namespace drTech_backend.Controllers
                 Name = department.Name,
                 DoctorsCount = department.DoctorsCount,
                 HospitalId = department.HospitalId,
-                HospitalName = "Unknown" // You could fetch this from the hospital service if needed
+                HospitalName = "Unknown"
             };
             
             return CreatedAtAction(nameof(GetAll), new { id = department.Id }, response);
