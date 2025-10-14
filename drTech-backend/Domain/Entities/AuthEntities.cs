@@ -5,7 +5,23 @@ namespace drTech_backend.Domain.Entities
         public Guid Id { get; set; }
         public string Email { get; set; } = string.Empty;
         public string PasswordHash { get; set; } = string.Empty;
-        public string Role { get; set; } = "User";
+        public string Role { get; set; } = "InsuredUser"; // HospitalAdmin/Doctor/InsuranceAgency/InsuredUser
+        public string FullName { get; set; } = string.Empty;
+        
+        // Foreign Keys
+        public Guid? HospitalId { get; set; }
+        public Guid? InsuranceAgencyId { get; set; }
+        public Guid? DoctorId { get; set; }
+        public Guid? PatientId { get; set; }
+        
+        // Navigation Properties
+        public Hospital? Hospital { get; set; }
+        public InsuranceAgency? InsuranceAgency { get; set; }
+        public Doctor? Doctor { get; set; }
+        public Patient? Patient { get; set; }
+        
+        public bool IsActive { get; set; } = true;
+        public DateTime CreatedAtUtc { get; set; }
         public ICollection<RefreshToken> RefreshTokens { get; set; } = new List<RefreshToken>();
     }
 

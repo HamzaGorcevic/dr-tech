@@ -48,6 +48,11 @@ namespace drTech_backend.Infrastructure.Abstractions
                 nameof(Domain.Entities.User) => "User",
                 nameof(Domain.Entities.RefreshToken) => "RefreshToken",
                 nameof(Domain.Entities.AuditLog) => "AuditLog",
+                nameof(Domain.Entities.RequestLog) => "RequestLog",
+                nameof(Domain.Entities.ErrorLog) => "ErrorLog",
+                nameof(Domain.Entities.ThrottleLog) => "ThrottleLog",
+                nameof(Domain.Entities.Discount) => "Discount",
+                nameof(Domain.Entities.DiscountRequest) => "DiscountRequest",
                 _ => typeof(T).Name
             };
         }

@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
 using MediatR;
 using drTech_backend.Application.Common.Mediator;
 
@@ -6,12 +7,14 @@ namespace drTech_backend.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
+    [Authorize]
     public class PaymentsController : ControllerBase
     {
         private readonly IMediator _mediator;
         public PaymentsController(IMediator mediator) { _mediator = mediator; }
 
         [HttpGet]
+        [Authorize(Roles = "HospitalAdmin,InsuranceAgency,InsuredUser")]
         public async Task<IActionResult> GetAll(CancellationToken cancellationToken) => Ok(await _mediator.Send(new GetAllQuery<Domain.Entities.Payment>(), cancellationToken));
 
         public class PaymentUploadDto
@@ -25,6 +28,7 @@ namespace drTech_backend.Controllers
         [HttpPost]
         [Consumes("multipart/form-data")]
         [RequestSizeLimit(20_000_000)]
+        [Authorize(Roles = "InsuredUser")]
         public async Task<IActionResult> Create([FromForm] PaymentUploadDto request, CancellationToken cancellationToken)
         {
             var payment = new Domain.Entities.Payment

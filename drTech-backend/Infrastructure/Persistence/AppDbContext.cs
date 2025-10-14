@@ -24,6 +24,43 @@ namespace drTech_backend.Infrastructure
         public DbSet<Domain.Entities.Payment> Payments => Set<Domain.Entities.Payment>();
         public DbSet<Domain.Entities.EquipmentStatusLog> EquipmentStatusLogs => Set<Domain.Entities.EquipmentStatusLog>();
         public DbSet<Domain.Entities.EquipmentServiceOrder> EquipmentServiceOrders => Set<Domain.Entities.EquipmentServiceOrder>();
+        public DbSet<Domain.Entities.Discount> Discounts => Set<Domain.Entities.Discount>();
+        public DbSet<Domain.Entities.DiscountRequest> DiscountRequests => Set<Domain.Entities.DiscountRequest>();
+        public DbSet<Domain.Entities.ErrorLog> ErrorLogs => Set<Domain.Entities.ErrorLog>();
+        public DbSet<Domain.Entities.RequestLog> RequestLogs => Set<Domain.Entities.RequestLog>();
+        public DbSet<Domain.Entities.ThrottleLog> ThrottleLogs => Set<Domain.Entities.ThrottleLog>();
+
+        protected override void OnModelCreating(ModelBuilder modelBuilder)
+        {
+            base.OnModelCreating(modelBuilder);
+
+            // Configure User role relationships
+            modelBuilder.Entity<Domain.Entities.User>()
+                .HasOne(u => u.Doctor)
+                .WithOne(d => d.User)
+                .HasForeignKey<Domain.Entities.Doctor>(d => d.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<Domain.Entities.User>()
+                .HasOne(u => u.Patient)
+                .WithOne(p => p.User)
+                .HasForeignKey<Domain.Entities.Patient>(p => p.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<Domain.Entities.User>()
+                .HasOne(u => u.Hospital)
+                .WithOne(h => h.User)
+                .HasForeignKey<Domain.Entities.Hospital>(h => h.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<Domain.Entities.User>()
+                .HasOne(u => u.InsuranceAgency)
+                .WithOne(ia => ia.User)
+                .HasForeignKey<Domain.Entities.InsuranceAgency>(ia => ia.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            // Note: Check constraints will be added in a separate migration after data is fixed
+        }
     }
 }
 

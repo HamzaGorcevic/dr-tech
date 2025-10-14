@@ -1,6 +1,7 @@
 
 using drTech_backend.Infrastructure;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authorization;
 using DotNetEnv;
 
 namespace drTech_backend
@@ -81,7 +82,53 @@ namespace drTech_backend
             // Add services to the container.
             builder.Services.AddControllers();
             builder.Services.AddEndpointsApiExplorer();
-            builder.Services.AddSwaggerGen();
+            
+            // Configure CORS for any domain (school project)
+            builder.Services.AddCors(options =>
+            {
+                options.AddPolicy("AllowAll", policy =>
+                {
+                    policy.AllowAnyOrigin()
+                          .AllowAnyMethod()
+                          .AllowAnyHeader();
+                });
+            });
+            
+            // Configure Swagger with JWT authentication
+            builder.Services.AddSwaggerGen(c =>
+            {
+                c.SwaggerDoc("v1", new Microsoft.OpenApi.Models.OpenApiInfo 
+                { 
+                    Title = "DrTech Healthcare Management API", 
+                    Version = "v1",
+                    Description = "A comprehensive healthcare management system with role-based access control"
+                });
+                
+                // Add JWT authentication to Swagger
+                c.AddSecurityDefinition("Bearer", new Microsoft.OpenApi.Models.OpenApiSecurityScheme
+                {
+                    Description = "JWT Authorization header using the Bearer scheme. Example: \"Authorization: Bearer {token}\"",
+                    Name = "Authorization",
+                    In = Microsoft.OpenApi.Models.ParameterLocation.Header,
+                    Type = Microsoft.OpenApi.Models.SecuritySchemeType.ApiKey,
+                    Scheme = "Bearer"
+                });
+                
+                c.AddSecurityRequirement(new Microsoft.OpenApi.Models.OpenApiSecurityRequirement
+                {
+                    {
+                        new Microsoft.OpenApi.Models.OpenApiSecurityScheme
+                        {
+                            Reference = new Microsoft.OpenApi.Models.OpenApiReference
+                            {
+                                Type = Microsoft.OpenApi.Models.ReferenceType.SecurityScheme,
+                                Id = "Bearer"
+                            }
+                        },
+                        new string[] {}
+                    }
+                });
+            });
 
             // Infrastructure + MediatR + AutoMapper
             builder.Services.AddInfrastructure(builder.Configuration);
@@ -113,6 +160,10 @@ namespace drTech_backend
             });
 
             builder.Services.AddAuthorization();
+            
+            // Add custom authorization services
+            builder.Services.AddScoped<IAuthorizationHandler, drTech_backend.Application.Common.Authorization.RoleBasedAuthorizationHandler>();
+            builder.Services.AddSingleton<IHttpContextAccessor, HttpContextAccessor>();
 
             builder.Services.Configure<drTech_backend.Infrastructure.Mongo.MongoSettings>(builder.Configuration.GetSection("Mongo"));
             builder.Services.Configure<drTech_backend.Infrastructure.Neo4j.Neo4jSettings>(builder.Configuration.GetSection("Neo4j"));
@@ -123,18 +174,43 @@ namespace drTech_backend
             if (app.Environment.IsDevelopment())
             {
                 app.UseSwagger();
-                app.UseSwaggerUI();
+                app.UseSwaggerUI(c =>
+                {
+                    c.SwaggerEndpoint("/swagger/v1/swagger.json", "DrTech Healthcare Management API v1");
+                    c.RoutePrefix = "swagger"; // Traditional Swagger UI path
+                    c.DocumentTitle = "DrTech Healthcare Management API";
+                    c.DisplayRequestDuration();
+                    c.EnableDeepLinking();
+                    c.EnableFilter();
+                    c.ShowExtensions();
+                });
             }
 
+            // Enable CORS
+            app.UseCors("AllowAll");
+            
             app.UseHttpsRedirection();
+            
+            // Error handling should be first
             app.UseMiddleware<Middleware.ErrorHandlingMiddleware>();
+            
+            // Request logging should be early to capture all requests
             app.UseMiddleware<Middleware.RequestLoggingMiddleware>();
+            
+            // Throttling should be before authentication to prevent abuse
             app.UseMiddleware<Middleware.ThrottlingMiddleware>();
+            
+            // Authentication and authorization
             app.UseAuthentication();
             app.UseAuthorization();
+            
+            // Audit middleware should be after authentication to capture user info
             app.UseMiddleware<Middleware.AuditMiddleware>();
 
             app.MapControllers();
+            
+            // Add a simple redirect from root to Swagger
+            app.MapGet("/", () => Results.Redirect("/swagger"));
 
             var activeProvider = (builder.Configuration["DatabaseProvider"] ?? "PostgreSQL").Trim();
             if (string.Equals(activeProvider, "PostgreSQL", StringComparison.OrdinalIgnoreCase))

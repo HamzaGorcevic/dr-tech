@@ -1,85 +1,171 @@
 using System.Collections.Concurrent;
-using Microsoft.Extensions.Options;
+using drTech_backend.Infrastructure.Abstractions;
 
 namespace drTech_backend.Middleware
 {
-    public class ThrottlingOptions
-    {
-        public int Limit { get; set; } = 100;
-        public TimeSpan Window { get; set; } = TimeSpan.FromMinutes(10);
-        public TimeSpan BlockDuration { get; set; } = TimeSpan.FromMinutes(5);
-        public HashSet<string> StrictPaths { get; set; } = new(new[] { "/api/uploads", "/api/contracts" });
-        public int StrictLimit { get; set; } = 20;
-        public TimeSpan StrictWindow { get; set; } = TimeSpan.FromMinutes(10);
-    }
-
-    internal class ClientState
-    {
-        public DateTime WindowStartUtc { get; set; }
-        public int Count { get; set; }
-        public DateTime? BlockedUntilUtc { get; set; }
-    }
-
     public class ThrottlingMiddleware
     {
         private readonly RequestDelegate _next;
         private readonly ILogger<ThrottlingMiddleware> _logger;
-        private readonly ThrottlingOptions _options;
-        private static readonly ConcurrentDictionary<string, ClientState> Clients = new();
+        private readonly ConcurrentDictionary<string, ThrottleInfo> _throttleCache = new();
 
-        public ThrottlingMiddleware(RequestDelegate next, ILogger<ThrottlingMiddleware> logger, IOptions<ThrottlingOptions> options)
+        // Configuration
+        private readonly int _maxRequestsPerWindow = 100;
+        private readonly int _windowSizeMinutes = 10;
+        private readonly int _blockDurationMinutes = 5;
+
+        public ThrottlingMiddleware(
+            RequestDelegate next,
+            ILogger<ThrottlingMiddleware> logger)
         {
             _next = next;
             _logger = logger;
-            _options = options.Value;
         }
 
-        public async Task Invoke(HttpContext context)
+        public async Task InvokeAsync(HttpContext context)
         {
-            var key = context.User?.Identity?.Name ?? context.Connection.RemoteIpAddress?.ToString() ?? "unknown";
-            var path = context.Request.Path.Value ?? string.Empty;
+            var clientId = GetClientId(context);
             var now = DateTime.UtcNow;
-            var isStrict = _options.StrictPaths.Contains(path);
 
-            var limit = isStrict ? _options.StrictLimit : _options.Limit;
-            var window = isStrict ? _options.StrictWindow : _options.Window;
-
-            var state = Clients.GetOrAdd(key, _ => new ClientState { WindowStartUtc = now, Count = 0 });
-
-            lock (state)
+            // Check if client is currently blocked
+            if (IsClientBlocked(clientId, now))
             {
-                if (state.BlockedUntilUtc.HasValue && state.BlockedUntilUtc.Value > now)
-                {
-                    context.Response.StatusCode = StatusCodes.Status429TooManyRequests;
-                    context.Response.Headers["Retry-After"] = ((int)(state.BlockedUntilUtc.Value - now).TotalSeconds).ToString();
-                }
-                else
-                {
-                    if (now - state.WindowStartUtc > window)
-                    {
-                        state.WindowStartUtc = now;
-                        state.Count = 0;
-                    }
-                    state.Count++;
-                    if (state.Count > limit)
-                    {
-                        state.BlockedUntilUtc = now.Add(_options.BlockDuration);
-                        context.Response.StatusCode = StatusCodes.Status429TooManyRequests;
-                        context.Response.Headers["Retry-After"] = ((int)_options.BlockDuration.TotalSeconds).ToString();
-                    }
-                }
-            }
-
-            if (context.Response.StatusCode == StatusCodes.Status429TooManyRequests)
-            {
-                _logger.LogWarning("Throttled request from {Key} to {Path}", key, path);
-                await context.Response.WriteAsync("Too many requests. Please try again later.");
+                _logger.LogWarning("Request blocked for client {ClientId} - still in block period", clientId);
+                context.Response.StatusCode = 429; // Too Many Requests
+                await context.Response.WriteAsync("Rate limit exceeded. Please try again later.");
                 return;
             }
 
+            // Get or create throttle info for this client
+            var throttleInfo = _throttleCache.GetOrAdd(clientId, _ => new ThrottleInfo
+            {
+                WindowStart = now,
+                RequestCount = 0
+            });
+
+            // Check if we need to reset the window
+            if (now - throttleInfo.WindowStart > TimeSpan.FromMinutes(_windowSizeMinutes))
+            {
+                throttleInfo.WindowStart = now;
+                throttleInfo.RequestCount = 0;
+            }
+
+            // Increment request count
+            throttleInfo.RequestCount++;
+
+            // Check if limit exceeded
+            if (throttleInfo.RequestCount > _maxRequestsPerWindow)
+            {
+                _logger.LogWarning("Rate limit exceeded for client {ClientId}: {RequestCount} requests in window", 
+                    clientId, throttleInfo.RequestCount);
+
+                // Block the client
+                throttleInfo.IsBlocked = true;
+                throttleInfo.BlockedUntil = now.AddMinutes(_blockDurationMinutes);
+
+                // Log the throttle event
+                await LogThrottleEventAsync(context, clientId, throttleInfo, now);
+
+                context.Response.StatusCode = 429; // Too Many Requests
+                await context.Response.WriteAsync("Rate limit exceeded. Please try again later.");
+                return;
+            }
+
+            // Add rate limit headers
+            context.Response.Headers["X-RateLimit-Limit"] = _maxRequestsPerWindow.ToString();
+            context.Response.Headers["X-RateLimit-Remaining"] = (_maxRequestsPerWindow - throttleInfo.RequestCount).ToString();
+            context.Response.Headers["X-RateLimit-Reset"] = throttleInfo.WindowStart.AddMinutes(_windowSizeMinutes).ToString("R");
+
             await _next(context);
+        }
+
+        private bool IsClientBlocked(string clientId, DateTime now)
+        {
+            if (_throttleCache.TryGetValue(clientId, out var throttleInfo))
+            {
+                if (throttleInfo.IsBlocked && throttleInfo.BlockedUntil > now)
+                {
+                    return true;
+                }
+                else if (throttleInfo.IsBlocked && throttleInfo.BlockedUntil <= now)
+                {
+                    // Unblock the client
+                    throttleInfo.IsBlocked = false;
+                    throttleInfo.BlockedUntil = null;
+                    throttleInfo.WindowStart = now;
+                    throttleInfo.RequestCount = 0;
+                }
+            }
+
+            return false;
+        }
+
+        private async Task LogThrottleEventAsync(HttpContext context, string clientId, ThrottleInfo throttleInfo, DateTime now)
+        {
+            try
+            {
+                var throttleLog = new Domain.Entities.ThrottleLog
+                {
+                    Id = Guid.NewGuid(),
+                    UserId = clientId.Contains("@") ? clientId : "anonymous",
+                    IpAddress = clientId.Contains(".") ? clientId : "unknown",
+                    RequestCount = throttleInfo.RequestCount,
+                    WindowStartUtc = throttleInfo.WindowStart,
+                    WindowEndUtc = throttleInfo.WindowStart.AddMinutes(_windowSizeMinutes),
+                    IsBlocked = true,
+                    BlockedUntilUtc = throttleInfo.BlockedUntil
+                };
+
+                // Use service locator to get the scoped service
+                var throttleLogDb = context.RequestServices.GetRequiredService<IDatabaseService<Domain.Entities.ThrottleLog>>();
+                await throttleLogDb.AddAsync(throttleLog, CancellationToken.None);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Failed to log throttle event to database");
+            }
+        }
+
+        private string GetClientId(HttpContext context)
+        {
+            // Try to get user ID first
+            var userId = context.User?.FindFirst("sub")?.Value;
+            if (!string.IsNullOrEmpty(userId))
+            {
+                return userId;
+            }
+
+            // Fall back to IP address
+            var ipAddress = GetClientIpAddress(context);
+            return ipAddress;
+        }
+
+        private string GetClientIpAddress(HttpContext context)
+        {
+            // Check for forwarded IP first (for load balancers/proxies)
+            var forwardedFor = context.Request.Headers["X-Forwarded-For"].FirstOrDefault();
+            if (!string.IsNullOrEmpty(forwardedFor))
+            {
+                return forwardedFor.Split(',')[0].Trim();
+            }
+
+            // Check for real IP header
+            var realIp = context.Request.Headers["X-Real-IP"].FirstOrDefault();
+            if (!string.IsNullOrEmpty(realIp))
+            {
+                return realIp;
+            }
+
+            // Fall back to connection remote IP
+            return context.Connection.RemoteIpAddress?.ToString() ?? "unknown";
+        }
+
+        private class ThrottleInfo
+        {
+            public DateTime WindowStart { get; set; }
+            public int RequestCount { get; set; }
+            public bool IsBlocked { get; set; }
+            public DateTime? BlockedUntil { get; set; }
         }
     }
 }
-
-

@@ -5,14 +5,16 @@ using drTech_backend.Infrastructure.Auth;
 namespace drTech_backend.Application.Common.Mediator
 {
     // Auth Commands
-    public record RegisterCommand(string Email, string Password) : IRequest<Unit>;
+    public record RegisterCommand(string Email, string Password, string Role = "InsuredUser", string FullName = "") : IRequest<Unit>;
     public record LoginCommand(string Email, string Password) : IRequest<LoginResponse>;
     public record RefreshTokenCommand(string RefreshToken) : IRequest<RefreshResponse>;
     public record GoogleLoginCommand(string Email, string IdToken) : IRequest<LoginResponse>;
+    public record GetUserProfileQuery(Guid UserId) : IRequest<UserProfileResponse>;
 
     // Auth Responses
     public record LoginResponse(string AccessToken, string RefreshToken);
     public record RefreshResponse(string AccessToken);
+    public record UserProfileResponse(Guid Id, string Email, string Role, string FullName, bool IsActive, DateTime CreatedAtUtc);
 
     // Auth Handlers
     public class RegisterCommandHandler : IRequestHandler<RegisterCommand, Unit>
@@ -29,12 +31,20 @@ namespace drTech_backend.Application.Common.Mediator
             var existing = (await _users.FindAsync(u => u.Email == request.Email, cancellationToken)).FirstOrDefault();
             if (existing != null) throw new InvalidOperationException("Email already in use");
 
+            // Validate role
+            var validRoles = new[] { "InsuredUser", "Doctor", "HospitalAdmin", "InsuranceAgency" };
+            if (!validRoles.Contains(request.Role))
+                throw new InvalidOperationException($"Invalid role. Valid roles are: {string.Join(", ", validRoles)}");
+
             var user = new Domain.Entities.User 
             { 
                 Id = Guid.NewGuid(), 
                 Email = request.Email, 
                 PasswordHash = BCrypt.Net.BCrypt.HashPassword(request.Password),
-                Role = "User" // Default role
+                Role = request.Role,
+                FullName = request.FullName,
+                IsActive = true,
+                CreatedAtUtc = DateTime.UtcNow
             };
 
             await _users.AddAsync(user, cancellationToken);
@@ -132,7 +142,9 @@ namespace drTech_backend.Application.Common.Mediator
                     Id = Guid.NewGuid(), 
                     Email = email, 
                     PasswordHash = string.Empty,
-                    Role = "User"
+                    Role = "InsuredUser",
+                    IsActive = true,
+                    CreatedAtUtc = DateTime.UtcNow
                 };
                 await _users.AddAsync(user, cancellationToken);
                 await _users.SaveChangesAsync(cancellationToken);
@@ -146,6 +158,31 @@ namespace drTech_backend.Application.Common.Mediator
             await _refreshTokens.SaveChangesAsync(cancellationToken);
 
             return new LoginResponse(accessToken, refreshToken.Token);
+        }
+    }
+
+    public class GetUserProfileQueryHandler : IRequestHandler<GetUserProfileQuery, UserProfileResponse>
+    {
+        private readonly IDatabaseService<Domain.Entities.User> _users;
+
+        public GetUserProfileQueryHandler(IDatabaseService<Domain.Entities.User> users)
+        {
+            _users = users;
+        }
+
+        public async Task<UserProfileResponse> Handle(GetUserProfileQuery request, CancellationToken cancellationToken)
+        {
+            var user = await _users.GetByIdAsync(request.UserId, cancellationToken);
+            if (user == null) throw new UnauthorizedAccessException("User not found");
+
+            return new UserProfileResponse(
+                user.Id,
+                user.Email,
+                user.Role,
+                user.FullName,
+                user.IsActive,
+                user.CreatedAtUtc
+            );
         }
     }
 }

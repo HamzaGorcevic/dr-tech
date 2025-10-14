@@ -344,4 +344,410 @@ namespace drTech_backend.Application.Common.Mediator
             return request.Entity;
         }
     }
+
+    // Concrete handlers for Equipment
+    public class GetAllEquipmentQueryHandler : IRequestHandler<GetAllQuery<Domain.Entities.Equipment>, IReadOnlyList<Domain.Entities.Equipment>>
+    {
+        private readonly IDatabaseService<Domain.Entities.Equipment> _db;
+        public GetAllEquipmentQueryHandler(IDatabaseService<Domain.Entities.Equipment> db) { _db = db; }
+        public async Task<IReadOnlyList<Domain.Entities.Equipment>> Handle(GetAllQuery<Domain.Entities.Equipment> request, CancellationToken cancellationToken)
+        {
+            var items = await _db.GetAllAsync(cancellationToken);
+            return items;
+        }
+    }
+
+    public class GetByIdEquipmentQueryHandler : IRequestHandler<GetByIdQuery<Domain.Entities.Equipment>, Domain.Entities.Equipment?>
+    {
+        private readonly IDatabaseService<Domain.Entities.Equipment> _db;
+        public GetByIdEquipmentQueryHandler(IDatabaseService<Domain.Entities.Equipment> db) { _db = db; }
+        public async Task<Domain.Entities.Equipment?> Handle(GetByIdQuery<Domain.Entities.Equipment> request, CancellationToken cancellationToken)
+        {
+            return await _db.GetByIdAsync(request.Id, cancellationToken);
+        }
+    }
+
+    public class CreateEquipmentCommandHandler : IRequestHandler<CreateCommand<Domain.Entities.Equipment>, Domain.Entities.Equipment>
+    {
+        private readonly IDatabaseService<Domain.Entities.Equipment> _db;
+        public CreateEquipmentCommandHandler(IDatabaseService<Domain.Entities.Equipment> db) { _db = db; }
+        public async Task<Domain.Entities.Equipment> Handle(CreateCommand<Domain.Entities.Equipment> request, CancellationToken cancellationToken)
+        {
+            await _db.AddAsync(request.Entity, cancellationToken);
+            await _db.SaveChangesAsync(cancellationToken);
+            return request.Entity;
+        }
+    }
+
+    public class UpdateEquipmentCommandHandler : IRequestHandler<UpdateCommand<Domain.Entities.Equipment>, Unit>
+    {
+        private readonly IDatabaseService<Domain.Entities.Equipment> _db;
+        public UpdateEquipmentCommandHandler(IDatabaseService<Domain.Entities.Equipment> db) { _db = db; }
+        public async Task<Unit> Handle(UpdateCommand<Domain.Entities.Equipment> request, CancellationToken cancellationToken)
+        {
+            await _db.UpdateAsync(request.Entity, cancellationToken);
+            await _db.SaveChangesAsync(cancellationToken);
+            return Unit.Value;
+        }
+    }
+
+    public class DeleteEquipmentCommandHandler : IRequestHandler<DeleteCommand<Domain.Entities.Equipment>, Unit>
+    {
+        private readonly IDatabaseService<Domain.Entities.Equipment> _db;
+        public DeleteEquipmentCommandHandler(IDatabaseService<Domain.Entities.Equipment> db) { _db = db; }
+        public async Task<Unit> Handle(DeleteCommand<Domain.Entities.Equipment> request, CancellationToken cancellationToken)
+        {
+            await _db.DeleteAsync(request.Id, cancellationToken);
+            await _db.SaveChangesAsync(cancellationToken);
+            return Unit.Value;
+        }
+    }
+
+    // Concrete handlers for Appointment
+    public class GetAllAppointmentsQueryHandler : IRequestHandler<GetAllQuery<Domain.Entities.Appointment>, IReadOnlyList<Domain.Entities.Appointment>>
+    {
+        private readonly IDatabaseService<Domain.Entities.Appointment> _db;
+        public GetAllAppointmentsQueryHandler(IDatabaseService<Domain.Entities.Appointment> db) { _db = db; }
+        public async Task<IReadOnlyList<Domain.Entities.Appointment>> Handle(GetAllQuery<Domain.Entities.Appointment> request, CancellationToken cancellationToken)
+        {
+            var items = await _db.GetAllAsync(cancellationToken);
+            return items;
+        }
+    }
+
+    public class GetByIdAppointmentQueryHandler : IRequestHandler<GetByIdQuery<Domain.Entities.Appointment>, Domain.Entities.Appointment?>
+    {
+        private readonly IDatabaseService<Domain.Entities.Appointment> _db;
+        public GetByIdAppointmentQueryHandler(IDatabaseService<Domain.Entities.Appointment> db) { _db = db; }
+        public async Task<Domain.Entities.Appointment?> Handle(GetByIdQuery<Domain.Entities.Appointment> request, CancellationToken cancellationToken)
+        {
+            return await _db.GetByIdAsync(request.Id, cancellationToken);
+        }
+    }
+
+    public class CreateAppointmentCommandHandler : IRequestHandler<CreateCommand<Domain.Entities.Appointment>, Domain.Entities.Appointment>
+    {
+        private readonly IDatabaseService<Domain.Entities.Appointment> _db;
+        public CreateAppointmentCommandHandler(IDatabaseService<Domain.Entities.Appointment> db) { _db = db; }
+        public async Task<Domain.Entities.Appointment> Handle(CreateCommand<Domain.Entities.Appointment> request, CancellationToken cancellationToken)
+        {
+            await _db.AddAsync(request.Entity, cancellationToken);
+            await _db.SaveChangesAsync(cancellationToken);
+            return request.Entity;
+        }
+    }
+
+    public class UpdateAppointmentCommandHandler : IRequestHandler<UpdateCommand<Domain.Entities.Appointment>, Unit>
+    {
+        private readonly IDatabaseService<Domain.Entities.Appointment> _db;
+        public UpdateAppointmentCommandHandler(IDatabaseService<Domain.Entities.Appointment> db) { _db = db; }
+        public async Task<Unit> Handle(UpdateCommand<Domain.Entities.Appointment> request, CancellationToken cancellationToken)
+        {
+            await _db.UpdateAsync(request.Entity, cancellationToken);
+            await _db.SaveChangesAsync(cancellationToken);
+            return Unit.Value;
+        }
+    }
+
+    public class DeleteAppointmentCommandHandler : IRequestHandler<DeleteCommand<Domain.Entities.Appointment>, Unit>
+    {
+        private readonly IDatabaseService<Domain.Entities.Appointment> _db;
+        public DeleteAppointmentCommandHandler(IDatabaseService<Domain.Entities.Appointment> db) { _db = db; }
+        public async Task<Unit> Handle(DeleteCommand<Domain.Entities.Appointment> request, CancellationToken cancellationToken)
+        {
+            await _db.DeleteAsync(request.Id, cancellationToken);
+            await _db.SaveChangesAsync(cancellationToken);
+            return Unit.Value;
+        }
+    }
+
+    // Concrete handlers for User
+    public class GetAllUsersQueryHandler : IRequestHandler<GetAllQuery<Domain.Entities.User>, IReadOnlyList<Domain.Entities.User>>
+    {
+        private readonly IDatabaseService<Domain.Entities.User> _db;
+        public GetAllUsersQueryHandler(IDatabaseService<Domain.Entities.User> db) { _db = db; }
+        public async Task<IReadOnlyList<Domain.Entities.User>> Handle(GetAllQuery<Domain.Entities.User> request, CancellationToken cancellationToken)
+        {
+            var items = await _db.GetAllAsync(cancellationToken);
+            return items;
+        }
+    }
+
+    public class GetByIdUserQueryHandler : IRequestHandler<GetByIdQuery<Domain.Entities.User>, Domain.Entities.User?>
+    {
+        private readonly IDatabaseService<Domain.Entities.User> _db;
+        public GetByIdUserQueryHandler(IDatabaseService<Domain.Entities.User> db) { _db = db; }
+        public async Task<Domain.Entities.User?> Handle(GetByIdQuery<Domain.Entities.User> request, CancellationToken cancellationToken)
+        {
+            return await _db.GetByIdAsync(request.Id, cancellationToken);
+        }
+    }
+
+    public class CreateUserCommandHandler : IRequestHandler<CreateCommand<Domain.Entities.User>, Domain.Entities.User>
+    {
+        private readonly IDatabaseService<Domain.Entities.User> _db;
+        public CreateUserCommandHandler(IDatabaseService<Domain.Entities.User> db) { _db = db; }
+        public async Task<Domain.Entities.User> Handle(CreateCommand<Domain.Entities.User> request, CancellationToken cancellationToken)
+        {
+            await _db.AddAsync(request.Entity, cancellationToken);
+            await _db.SaveChangesAsync(cancellationToken);
+            return request.Entity;
+        }
+    }
+
+    public class UpdateUserCommandHandler : IRequestHandler<UpdateCommand<Domain.Entities.User>, Unit>
+    {
+        private readonly IDatabaseService<Domain.Entities.User> _db;
+        public UpdateUserCommandHandler(IDatabaseService<Domain.Entities.User> db) { _db = db; }
+        public async Task<Unit> Handle(UpdateCommand<Domain.Entities.User> request, CancellationToken cancellationToken)
+        {
+            await _db.UpdateAsync(request.Entity, cancellationToken);
+            await _db.SaveChangesAsync(cancellationToken);
+            return Unit.Value;
+        }
+    }
+
+    public class DeleteUserCommandHandler : IRequestHandler<DeleteCommand<Domain.Entities.User>, Unit>
+    {
+        private readonly IDatabaseService<Domain.Entities.User> _db;
+        public DeleteUserCommandHandler(IDatabaseService<Domain.Entities.User> db) { _db = db; }
+        public async Task<Unit> Handle(DeleteCommand<Domain.Entities.User> request, CancellationToken cancellationToken)
+        {
+            await _db.DeleteAsync(request.Id, cancellationToken);
+            await _db.SaveChangesAsync(cancellationToken);
+            return Unit.Value;
+        }
+    }
+
+    // Concrete handlers for Discount
+    public class GetAllDiscountsQueryHandler : IRequestHandler<GetAllQuery<Domain.Entities.Discount>, IReadOnlyList<Domain.Entities.Discount>>
+    {
+        private readonly IDatabaseService<Domain.Entities.Discount> _db;
+        public GetAllDiscountsQueryHandler(IDatabaseService<Domain.Entities.Discount> db) { _db = db; }
+        public async Task<IReadOnlyList<Domain.Entities.Discount>> Handle(GetAllQuery<Domain.Entities.Discount> request, CancellationToken cancellationToken)
+        {
+            var items = await _db.GetAllAsync(cancellationToken);
+            return items;
+        }
+    }
+
+    public class GetByIdDiscountQueryHandler : IRequestHandler<GetByIdQuery<Domain.Entities.Discount>, Domain.Entities.Discount?>
+    {
+        private readonly IDatabaseService<Domain.Entities.Discount> _db;
+        public GetByIdDiscountQueryHandler(IDatabaseService<Domain.Entities.Discount> db) { _db = db; }
+        public async Task<Domain.Entities.Discount?> Handle(GetByIdQuery<Domain.Entities.Discount> request, CancellationToken cancellationToken)
+        {
+            return await _db.GetByIdAsync(request.Id, cancellationToken);
+        }
+    }
+
+    public class CreateDiscountCommandHandler : IRequestHandler<CreateCommand<Domain.Entities.Discount>, Domain.Entities.Discount>
+    {
+        private readonly IDatabaseService<Domain.Entities.Discount> _db;
+        public CreateDiscountCommandHandler(IDatabaseService<Domain.Entities.Discount> db) { _db = db; }
+        public async Task<Domain.Entities.Discount> Handle(CreateCommand<Domain.Entities.Discount> request, CancellationToken cancellationToken)
+        {
+            await _db.AddAsync(request.Entity, cancellationToken);
+            await _db.SaveChangesAsync(cancellationToken);
+            return request.Entity;
+        }
+    }
+
+    public class UpdateDiscountCommandHandler : IRequestHandler<UpdateCommand<Domain.Entities.Discount>, Unit>
+    {
+        private readonly IDatabaseService<Domain.Entities.Discount> _db;
+        public UpdateDiscountCommandHandler(IDatabaseService<Domain.Entities.Discount> db) { _db = db; }
+        public async Task<Unit> Handle(UpdateCommand<Domain.Entities.Discount> request, CancellationToken cancellationToken)
+        {
+            await _db.UpdateAsync(request.Entity, cancellationToken);
+            await _db.SaveChangesAsync(cancellationToken);
+            return Unit.Value;
+        }
+    }
+
+    public class DeleteDiscountCommandHandler : IRequestHandler<DeleteCommand<Domain.Entities.Discount>, Unit>
+    {
+        private readonly IDatabaseService<Domain.Entities.Discount> _db;
+        public DeleteDiscountCommandHandler(IDatabaseService<Domain.Entities.Discount> db) { _db = db; }
+        public async Task<Unit> Handle(DeleteCommand<Domain.Entities.Discount> request, CancellationToken cancellationToken)
+        {
+            await _db.DeleteAsync(request.Id, cancellationToken);
+            await _db.SaveChangesAsync(cancellationToken);
+            return Unit.Value;
+        }
+    }
+
+    // Concrete handlers for DiscountRequest
+    public class GetAllDiscountRequestsQueryHandler : IRequestHandler<GetAllQuery<Domain.Entities.DiscountRequest>, IReadOnlyList<Domain.Entities.DiscountRequest>>
+    {
+        private readonly IDatabaseService<Domain.Entities.DiscountRequest> _db;
+        public GetAllDiscountRequestsQueryHandler(IDatabaseService<Domain.Entities.DiscountRequest> db) { _db = db; }
+        public async Task<IReadOnlyList<Domain.Entities.DiscountRequest>> Handle(GetAllQuery<Domain.Entities.DiscountRequest> request, CancellationToken cancellationToken)
+        {
+            var items = await _db.GetAllAsync(cancellationToken);
+            return items;
+        }
+    }
+
+    public class GetByIdDiscountRequestQueryHandler : IRequestHandler<GetByIdQuery<Domain.Entities.DiscountRequest>, Domain.Entities.DiscountRequest?>
+    {
+        private readonly IDatabaseService<Domain.Entities.DiscountRequest> _db;
+        public GetByIdDiscountRequestQueryHandler(IDatabaseService<Domain.Entities.DiscountRequest> db) { _db = db; }
+        public async Task<Domain.Entities.DiscountRequest?> Handle(GetByIdQuery<Domain.Entities.DiscountRequest> request, CancellationToken cancellationToken)
+        {
+            return await _db.GetByIdAsync(request.Id, cancellationToken);
+        }
+    }
+
+    public class CreateDiscountRequestCommandHandler : IRequestHandler<CreateCommand<Domain.Entities.DiscountRequest>, Domain.Entities.DiscountRequest>
+    {
+        private readonly IDatabaseService<Domain.Entities.DiscountRequest> _db;
+        public CreateDiscountRequestCommandHandler(IDatabaseService<Domain.Entities.DiscountRequest> db) { _db = db; }
+        public async Task<Domain.Entities.DiscountRequest> Handle(CreateCommand<Domain.Entities.DiscountRequest> request, CancellationToken cancellationToken)
+        {
+            await _db.AddAsync(request.Entity, cancellationToken);
+            await _db.SaveChangesAsync(cancellationToken);
+            return request.Entity;
+        }
+    }
+
+    public class UpdateDiscountRequestCommandHandler : IRequestHandler<UpdateCommand<Domain.Entities.DiscountRequest>, Unit>
+    {
+        private readonly IDatabaseService<Domain.Entities.DiscountRequest> _db;
+        public UpdateDiscountRequestCommandHandler(IDatabaseService<Domain.Entities.DiscountRequest> db) { _db = db; }
+        public async Task<Unit> Handle(UpdateCommand<Domain.Entities.DiscountRequest> request, CancellationToken cancellationToken)
+        {
+            await _db.UpdateAsync(request.Entity, cancellationToken);
+            await _db.SaveChangesAsync(cancellationToken);
+            return Unit.Value;
+        }
+    }
+
+    public class DeleteDiscountRequestCommandHandler : IRequestHandler<DeleteCommand<Domain.Entities.DiscountRequest>, Unit>
+    {
+        private readonly IDatabaseService<Domain.Entities.DiscountRequest> _db;
+        public DeleteDiscountRequestCommandHandler(IDatabaseService<Domain.Entities.DiscountRequest> db) { _db = db; }
+        public async Task<Unit> Handle(DeleteCommand<Domain.Entities.DiscountRequest> request, CancellationToken cancellationToken)
+        {
+            await _db.DeleteAsync(request.Id, cancellationToken);
+            await _db.SaveChangesAsync(cancellationToken);
+            return Unit.Value;
+        }
+    }
+
+    // Concrete handlers for EquipmentStatusLog
+    public class GetAllEquipmentStatusLogsQueryHandler : IRequestHandler<GetAllQuery<Domain.Entities.EquipmentStatusLog>, IReadOnlyList<Domain.Entities.EquipmentStatusLog>>
+    {
+        private readonly IDatabaseService<Domain.Entities.EquipmentStatusLog> _db;
+        public GetAllEquipmentStatusLogsQueryHandler(IDatabaseService<Domain.Entities.EquipmentStatusLog> db) { _db = db; }
+        public async Task<IReadOnlyList<Domain.Entities.EquipmentStatusLog>> Handle(GetAllQuery<Domain.Entities.EquipmentStatusLog> request, CancellationToken cancellationToken)
+        {
+            var items = await _db.GetAllAsync(cancellationToken);
+            return items;
+        }
+    }
+
+    public class GetByIdEquipmentStatusLogQueryHandler : IRequestHandler<GetByIdQuery<Domain.Entities.EquipmentStatusLog>, Domain.Entities.EquipmentStatusLog?>
+    {
+        private readonly IDatabaseService<Domain.Entities.EquipmentStatusLog> _db;
+        public GetByIdEquipmentStatusLogQueryHandler(IDatabaseService<Domain.Entities.EquipmentStatusLog> db) { _db = db; }
+        public async Task<Domain.Entities.EquipmentStatusLog?> Handle(GetByIdQuery<Domain.Entities.EquipmentStatusLog> request, CancellationToken cancellationToken)
+        {
+            return await _db.GetByIdAsync(request.Id, cancellationToken);
+        }
+    }
+
+    public class CreateEquipmentStatusLogCommandHandler : IRequestHandler<CreateCommand<Domain.Entities.EquipmentStatusLog>, Domain.Entities.EquipmentStatusLog>
+    {
+        private readonly IDatabaseService<Domain.Entities.EquipmentStatusLog> _db;
+        public CreateEquipmentStatusLogCommandHandler(IDatabaseService<Domain.Entities.EquipmentStatusLog> db) { _db = db; }
+        public async Task<Domain.Entities.EquipmentStatusLog> Handle(CreateCommand<Domain.Entities.EquipmentStatusLog> request, CancellationToken cancellationToken)
+        {
+            await _db.AddAsync(request.Entity, cancellationToken);
+            await _db.SaveChangesAsync(cancellationToken);
+            return request.Entity;
+        }
+    }
+
+    public class UpdateEquipmentStatusLogCommandHandler : IRequestHandler<UpdateCommand<Domain.Entities.EquipmentStatusLog>, Unit>
+    {
+        private readonly IDatabaseService<Domain.Entities.EquipmentStatusLog> _db;
+        public UpdateEquipmentStatusLogCommandHandler(IDatabaseService<Domain.Entities.EquipmentStatusLog> db) { _db = db; }
+        public async Task<Unit> Handle(UpdateCommand<Domain.Entities.EquipmentStatusLog> request, CancellationToken cancellationToken)
+        {
+            await _db.UpdateAsync(request.Entity, cancellationToken);
+            await _db.SaveChangesAsync(cancellationToken);
+            return Unit.Value;
+        }
+    }
+
+    public class DeleteEquipmentStatusLogCommandHandler : IRequestHandler<DeleteCommand<Domain.Entities.EquipmentStatusLog>, Unit>
+    {
+        private readonly IDatabaseService<Domain.Entities.EquipmentStatusLog> _db;
+        public DeleteEquipmentStatusLogCommandHandler(IDatabaseService<Domain.Entities.EquipmentStatusLog> db) { _db = db; }
+        public async Task<Unit> Handle(DeleteCommand<Domain.Entities.EquipmentStatusLog> request, CancellationToken cancellationToken)
+        {
+            await _db.DeleteAsync(request.Id, cancellationToken);
+            await _db.SaveChangesAsync(cancellationToken);
+            return Unit.Value;
+        }
+    }
+
+    // Concrete handlers for EquipmentServiceOrder
+    public class GetAllEquipmentServiceOrdersQueryHandler : IRequestHandler<GetAllQuery<Domain.Entities.EquipmentServiceOrder>, IReadOnlyList<Domain.Entities.EquipmentServiceOrder>>
+    {
+        private readonly IDatabaseService<Domain.Entities.EquipmentServiceOrder> _db;
+        public GetAllEquipmentServiceOrdersQueryHandler(IDatabaseService<Domain.Entities.EquipmentServiceOrder> db) { _db = db; }
+        public async Task<IReadOnlyList<Domain.Entities.EquipmentServiceOrder>> Handle(GetAllQuery<Domain.Entities.EquipmentServiceOrder> request, CancellationToken cancellationToken)
+        {
+            var items = await _db.GetAllAsync(cancellationToken);
+            return items;
+        }
+    }
+
+    public class GetByIdEquipmentServiceOrderQueryHandler : IRequestHandler<GetByIdQuery<Domain.Entities.EquipmentServiceOrder>, Domain.Entities.EquipmentServiceOrder?>
+    {
+        private readonly IDatabaseService<Domain.Entities.EquipmentServiceOrder> _db;
+        public GetByIdEquipmentServiceOrderQueryHandler(IDatabaseService<Domain.Entities.EquipmentServiceOrder> db) { _db = db; }
+        public async Task<Domain.Entities.EquipmentServiceOrder?> Handle(GetByIdQuery<Domain.Entities.EquipmentServiceOrder> request, CancellationToken cancellationToken)
+        {
+            return await _db.GetByIdAsync(request.Id, cancellationToken);
+        }
+    }
+
+    public class CreateEquipmentServiceOrderCommandHandler : IRequestHandler<CreateCommand<Domain.Entities.EquipmentServiceOrder>, Domain.Entities.EquipmentServiceOrder>
+    {
+        private readonly IDatabaseService<Domain.Entities.EquipmentServiceOrder> _db;
+        public CreateEquipmentServiceOrderCommandHandler(IDatabaseService<Domain.Entities.EquipmentServiceOrder> db) { _db = db; }
+        public async Task<Domain.Entities.EquipmentServiceOrder> Handle(CreateCommand<Domain.Entities.EquipmentServiceOrder> request, CancellationToken cancellationToken)
+        {
+            await _db.AddAsync(request.Entity, cancellationToken);
+            await _db.SaveChangesAsync(cancellationToken);
+            return request.Entity;
+        }
+    }
+
+    public class UpdateEquipmentServiceOrderCommandHandler : IRequestHandler<UpdateCommand<Domain.Entities.EquipmentServiceOrder>, Unit>
+    {
+        private readonly IDatabaseService<Domain.Entities.EquipmentServiceOrder> _db;
+        public UpdateEquipmentServiceOrderCommandHandler(IDatabaseService<Domain.Entities.EquipmentServiceOrder> db) { _db = db; }
+        public async Task<Unit> Handle(UpdateCommand<Domain.Entities.EquipmentServiceOrder> request, CancellationToken cancellationToken)
+        {
+            await _db.UpdateAsync(request.Entity, cancellationToken);
+            await _db.SaveChangesAsync(cancellationToken);
+            return Unit.Value;
+        }
+    }
+
+    public class DeleteEquipmentServiceOrderCommandHandler : IRequestHandler<DeleteCommand<Domain.Entities.EquipmentServiceOrder>, Unit>
+    {
+        private readonly IDatabaseService<Domain.Entities.EquipmentServiceOrder> _db;
+        public DeleteEquipmentServiceOrderCommandHandler(IDatabaseService<Domain.Entities.EquipmentServiceOrder> db) { _db = db; }
+        public async Task<Unit> Handle(DeleteCommand<Domain.Entities.EquipmentServiceOrder> request, CancellationToken cancellationToken)
+        {
+            await _db.DeleteAsync(request.Id, cancellationToken);
+            await _db.SaveChangesAsync(cancellationToken);
+            return Unit.Value;
+        }
+    }
 }

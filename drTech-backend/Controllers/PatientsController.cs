@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
 using MediatR;
 using drTech_backend.Application.Common.Mediator;
 
@@ -6,15 +7,18 @@ namespace drTech_backend.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
+    [Authorize]
     public class PatientsController : ControllerBase
     {
         private readonly IMediator _mediator;
         public PatientsController(IMediator mediator) { _mediator = mediator; }
 
         [HttpGet]
+        [Authorize(Roles = "HospitalAdmin,Doctor,InsuranceAgency")]
         public async Task<IActionResult> GetAll(CancellationToken cancellationToken) => Ok(await _mediator.Send(new GetAllQuery<Domain.Entities.Patient>(), cancellationToken));
 
         [HttpGet("{id:guid}")]
+        [Authorize(Roles = "HospitalAdmin,Doctor,InsuranceAgency,InsuredUser")]
         public async Task<IActionResult> Get(Guid id, CancellationToken cancellationToken)
         {
             var item = await _mediator.Send(new GetByIdQuery<Domain.Entities.Patient>(id), cancellationToken);
@@ -22,6 +26,7 @@ namespace drTech_backend.Controllers
         }
 
         [HttpPost]
+        [Authorize(Roles = "HospitalAdmin,Doctor,InsuranceAgency")]
         public async Task<IActionResult> Create([FromBody] Domain.Entities.Patient request, CancellationToken cancellationToken)
         {
             if (request.Id == Guid.Empty) request.Id = Guid.NewGuid();
@@ -30,6 +35,7 @@ namespace drTech_backend.Controllers
         }
 
         [HttpPut("{id:guid}")]
+        [Authorize(Roles = "HospitalAdmin,Doctor,InsuranceAgency,InsuredUser")]
         public async Task<IActionResult> Update(Guid id, [FromBody] Domain.Entities.Patient request, CancellationToken cancellationToken)
         {
             if (id != request.Id) return BadRequest();
@@ -38,6 +44,7 @@ namespace drTech_backend.Controllers
         }
 
         [HttpDelete("{id:guid}")]
+        [Authorize(Roles = "HospitalAdmin")]
         public async Task<IActionResult> Delete(Guid id, CancellationToken cancellationToken)
         {
             await _mediator.Send(new DeleteCommand<Domain.Entities.Patient>(id), cancellationToken);

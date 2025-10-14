@@ -22,12 +22,44 @@ namespace drTech_backend.Controllers
         {
             try
             {
-                await _mediator.Send(new RegisterCommand(req.Email, req.Password), cancellationToken);
-                return Ok();
+                await _mediator.Send(new RegisterCommand(req.Email, req.Password, req.Role, req.FullName), cancellationToken);
+                return Ok(new { message = "User registered successfully", role = req.Role });
             }
             catch (InvalidOperationException ex)
             {
                 return Conflict(ex.Message);
+            }
+        }
+
+        [HttpGet("roles")]
+        [AllowAnonymous]
+        public IActionResult GetAvailableRoles()
+        {
+            var roles = new[]
+            {
+                new { value = "InsuredUser", label = "Insured User", description = "Regular patient/user", defaultRole = true },
+                new { value = "Doctor", label = "Doctor", description = "Medical professional", defaultRole = false },
+                new { value = "HospitalAdmin", label = "Hospital Administrator", description = "Hospital management", defaultRole = false },
+                new { value = "InsuranceAgency", label = "Insurance Agency", description = "Insurance company representative", defaultRole = false }
+            };
+            return Ok(roles);
+        }
+
+        [HttpGet("profile")]
+        [Authorize]
+        public async Task<IActionResult> GetProfile(CancellationToken cancellationToken)
+        {
+            try
+            {
+                var userId = User.FindFirst("sub")?.Value;
+                if (string.IsNullOrEmpty(userId)) return Unauthorized();
+
+                var user = await _mediator.Send(new GetUserProfileQuery(Guid.Parse(userId)), cancellationToken);
+                return Ok(user);
+            }
+            catch (Exception)
+            {
+                return Unauthorized();
             }
         }
 
@@ -77,7 +109,7 @@ namespace drTech_backend.Controllers
         }
     }
 
-    public record RegisterRequest(string Email, string Password);
+    public record RegisterRequest(string Email, string Password, string Role = "InsuredUser", string FullName = "");
     public record LoginRequest(string Email, string Password);
     public record RefreshRequest(string RefreshToken);
     public record GoogleTokenRequest(string Email, string IdToken);

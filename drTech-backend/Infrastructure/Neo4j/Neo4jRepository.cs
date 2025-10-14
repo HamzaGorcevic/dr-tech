@@ -152,8 +152,8 @@ namespace drTech_backend.Infrastructure.Neo4j
                 Guid guid => guid.ToString(),
                 DateTime dateTime => dateTime.ToString("O"),
                 IEnumerable<object> collection => collection.Select(ConvertValue).ToList(),
-                _ when value.GetType().IsClass && value.GetType() != typeof(string) => ConvertObjectToDictionary(value),
-                _ => value
+                _ when value?.GetType()?.IsClass == true && value.GetType() != typeof(string) => ConvertObjectToDictionary(value),
+                _ => value ?? string.Empty
             };
         }
 
@@ -178,6 +178,7 @@ namespace drTech_backend.Infrastructure.Neo4j
         public string Id { get; set; } = string.Empty;
         public string Name { get; set; } = string.Empty;
         public string City { get; set; } = string.Empty;
+        public string? UserId { get; set; } // For HospitalAdmin role
     }
 
     public class Neo4jDepartment
@@ -194,6 +195,9 @@ namespace drTech_backend.Infrastructure.Neo4j
         public string FullName { get; set; } = string.Empty;
         public string Specialty { get; set; } = string.Empty;
         public string DepartmentId { get; set; } = string.Empty;
+        public string WorkingHours { get; set; } = string.Empty;
+        public bool IsAvailable { get; set; } = true;
+        public string UserId { get; set; } = string.Empty;
     }
 
     public class Neo4jPatient
@@ -202,6 +206,10 @@ namespace drTech_backend.Infrastructure.Neo4j
         public string FullName { get; set; } = string.Empty;
         public string InsuranceNumber { get; set; } = string.Empty;
         public string? Allergies { get; set; }
+        public string? MedicalHistory { get; set; }
+        public string? CurrentTherapies { get; set; }
+        public string? InsuranceAgencyId { get; set; }
+        public string UserId { get; set; } = string.Empty;
     }
 
     public class Neo4jEquipment
@@ -212,6 +220,8 @@ namespace drTech_backend.Infrastructure.Neo4j
         public string Status { get; set; } = "Operational";
         public string DepartmentId { get; set; } = string.Empty;
         public bool IsWithdrawn { get; set; }
+        public string? LastServiceDate { get; set; }
+        public string? NextServiceDate { get; set; }
     }
 
     public class Neo4jReservation
@@ -231,6 +241,7 @@ namespace drTech_backend.Infrastructure.Neo4j
         public string Id { get; set; } = string.Empty;
         public string Name { get; set; } = string.Empty;
         public string City { get; set; } = string.Empty;
+        public string? UserId { get; set; } // For InsuranceAgency role
     }
 
     public class Neo4jAgencyContract
@@ -282,7 +293,14 @@ namespace drTech_backend.Infrastructure.Neo4j
         public string Id { get; set; } = string.Empty;
         public string Email { get; set; } = string.Empty;
         public string PasswordHash { get; set; } = string.Empty;
-        public string Role { get; set; } = "User";
+        public string Role { get; set; } = "InsuredUser";
+        public string FullName { get; set; } = string.Empty;
+        public string? HospitalId { get; set; }
+        public string? InsuranceAgencyId { get; set; }
+        public string? DoctorId { get; set; }
+        public string? PatientId { get; set; }
+        public bool IsActive { get; set; } = true;
+        public string CreatedAtUtc { get; set; } = string.Empty;
     }
 
     public class Neo4jPreContract
@@ -334,5 +352,90 @@ namespace drTech_backend.Infrastructure.Neo4j
         public int StatusCode { get; set; }
         public string OccurredAtUtc { get; set; } = string.Empty;
         public string? Description { get; set; }
+    }
+
+    public class Neo4jAppointment
+    {
+        public string Id { get; set; } = string.Empty;
+        public string HospitalId { get; set; } = string.Empty;
+        public string DepartmentId { get; set; } = string.Empty;
+        public string DoctorId { get; set; } = string.Empty;
+        public string PatientId { get; set; } = string.Empty;
+        public string? MedicalServiceId { get; set; }
+        public string StartsAtUtc { get; set; } = string.Empty;
+        public string EndsAtUtc { get; set; } = string.Empty;
+        public string Type { get; set; } = string.Empty;
+        public string Status { get; set; } = "Scheduled";
+        public bool IsConfirmed { get; set; }
+        public int RescheduleCount { get; set; }
+        public string? Notes { get; set; }
+        public string RequiredEquipmentIds { get; set; } = string.Empty; // JSON array as string
+    }
+
+    public class Neo4jDiscount
+    {
+        public string Id { get; set; } = string.Empty;
+        public string PatientId { get; set; } = string.Empty;
+        public string? HospitalId { get; set; }
+        public string? InsuranceAgencyId { get; set; }
+        public decimal DiscountPercent { get; set; }
+        public decimal MaxDiscountAmount { get; set; }
+        public string Reason { get; set; } = string.Empty;
+        public string ValidFrom { get; set; } = string.Empty;
+        public string ValidUntil { get; set; } = string.Empty;
+        public bool IsActive { get; set; } = true;
+        public string Status { get; set; } = "Pending";
+    }
+
+    public class Neo4jDiscountRequest
+    {
+        public string Id { get; set; } = string.Empty;
+        public string InsuranceAgencyId { get; set; } = string.Empty;
+        public string HospitalId { get; set; } = string.Empty;
+        public string PatientId { get; set; } = string.Empty;
+        public decimal RequestedDiscountPercent { get; set; }
+        public string Reason { get; set; } = string.Empty;
+        public string? Explanation { get; set; }
+        public string Status { get; set; } = "Pending";
+        public string? RejectionReason { get; set; }
+        public string RequestedAtUtc { get; set; } = string.Empty;
+        public string? RespondedAtUtc { get; set; }
+    }
+
+    public class Neo4jErrorLog
+    {
+        public string Id { get; set; } = string.Empty;
+        public string ErrorType { get; set; } = string.Empty;
+        public int StatusCode { get; set; }
+        public string Message { get; set; } = string.Empty;
+        public string? StackTrace { get; set; }
+        public string? RequestPath { get; set; }
+        public string? RequestMethod { get; set; }
+        public string? UserId { get; set; }
+        public string OccurredAtUtc { get; set; } = string.Empty;
+    }
+
+    public class Neo4jRequestLog
+    {
+        public string Id { get; set; } = string.Empty;
+        public string UserId { get; set; } = string.Empty;
+        public string IpAddress { get; set; } = string.Empty;
+        public string Endpoint { get; set; } = string.Empty;
+        public string HttpMethod { get; set; } = string.Empty;
+        public int StatusCode { get; set; }
+        public long ResponseTimeMs { get; set; }
+        public string TimestampUtc { get; set; } = string.Empty;
+    }
+
+    public class Neo4jThrottleLog
+    {
+        public string Id { get; set; } = string.Empty;
+        public string UserId { get; set; } = string.Empty;
+        public string IpAddress { get; set; } = string.Empty;
+        public int RequestCount { get; set; }
+        public string WindowStartUtc { get; set; } = string.Empty;
+        public string WindowEndUtc { get; set; } = string.Empty;
+        public bool IsBlocked { get; set; }
+        public string? BlockedUntilUtc { get; set; }
     }
 }

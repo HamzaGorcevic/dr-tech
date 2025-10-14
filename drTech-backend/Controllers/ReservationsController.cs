@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
 using MediatR;
 using drTech_backend.Application.Common.Mediator;
 using drTech_backend.Infrastructure.Abstractions;
@@ -7,6 +8,7 @@ namespace drTech_backend.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
+    [Authorize]
     public class ReservationsController : ControllerBase
     {
         private readonly IMediator _mediator;
@@ -14,9 +16,11 @@ namespace drTech_backend.Controllers
         public ReservationsController(IMediator mediator, IDatabaseService<Domain.Entities.Reservation> db) { _mediator = mediator; _db = db; }
 
         [HttpGet]
+        [Authorize(Roles = "HospitalAdmin,Doctor,InsuredUser")]
         public async Task<IActionResult> GetAll(CancellationToken cancellationToken) => Ok(await _mediator.Send(new GetAllQuery<Domain.Entities.Reservation>(), cancellationToken));
 
         [HttpPost]
+        [Authorize(Roles = "HospitalAdmin,Doctor,InsuredUser")]
         public async Task<IActionResult> Create([FromBody] Domain.Entities.Reservation request, CancellationToken cancellationToken)
         {
             // enforce one active reservation per patient overlapping period

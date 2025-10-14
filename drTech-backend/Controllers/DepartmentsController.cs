@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
 using MediatR;
 using drTech_backend.Application.Common.Mediator;
 
@@ -6,15 +7,18 @@ namespace drTech_backend.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
+    [Authorize]
     public class DepartmentsController : ControllerBase
     {
         private readonly IMediator _mediator;
         public DepartmentsController(IMediator mediator) { _mediator = mediator; }
 
         [HttpGet]
+        [AllowAnonymous]
         public async Task<IActionResult> GetAll(CancellationToken cancellationToken) => Ok(await _mediator.Send(new GetAllQuery<Domain.Entities.Department>(), cancellationToken));
 
         [HttpPost]
+        [Authorize(Roles = "HospitalAdmin")]
         public async Task<IActionResult> Create([FromBody] CreateDepartmentDto request, CancellationToken cancellationToken)
         {
             var department = new Domain.Entities.Department

@@ -7,6 +7,7 @@ namespace drTech_backend.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
+    [Authorize]
     public class HospitalsController : ControllerBase
     {
         private readonly IMediator _mediator;
@@ -18,6 +19,7 @@ namespace drTech_backend.Controllers
 
         [HttpGet]
         [ProducesResponseType(StatusCodes.Status200OK)]
+        [AllowAnonymous]
         public async Task<IActionResult> Get(CancellationToken cancellationToken)
         {
             var items = await _mediator.Send(new GetAllQuery<Domain.Entities.Hospital>(), cancellationToken);
@@ -25,6 +27,7 @@ namespace drTech_backend.Controllers
         }
 
         [HttpPost]
+        [Authorize(Roles = "HospitalAdmin")]
         public async Task<IActionResult> Create([FromBody] CreateHospitalDto request, CancellationToken cancellationToken)
         {
             var hospital = new Domain.Entities.Hospital

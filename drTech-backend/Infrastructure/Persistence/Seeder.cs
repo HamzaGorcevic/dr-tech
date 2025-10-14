@@ -25,17 +25,74 @@ namespace drTech_backend.Infrastructure
                 await db.Database.MigrateAsync();
             }
 
-            // Users
+            // Users with different roles
+            Guid hospitalAdminUserId = Guid.Empty;
+            Guid doctorUserId = Guid.Empty;
+            Guid agencyRepUserId = Guid.Empty;
+            Guid insuredUserId = Guid.Empty;
+
             if (!await db.Users.AnyAsync())
             {
-                var admin = new Domain.Entities.User
+                // Hospital Admin
+                var hospitalAdmin = new Domain.Entities.User
                 {
                     Id = Guid.NewGuid(),
-                    Email = "admin@drtech.local",
+                    Email = "hospital.admin@drtech.local",
                     PasswordHash = BCrypt.Net.BCrypt.HashPassword("Admin#123"),
-                    Role = "Admin"
+                    Role = "HospitalAdmin",
+                    FullName = "Hospital Administrator",
+                    CreatedAtUtc = DateTime.UtcNow
                 };
-                await db.Users.AddAsync(admin);
+                await db.Users.AddAsync(hospitalAdmin);
+                hospitalAdminUserId = hospitalAdmin.Id;
+
+                // Doctor
+                var doctor = new Domain.Entities.User
+                {
+                    Id = Guid.NewGuid(),
+                    Email = "doctor@drtech.local",
+                    PasswordHash = BCrypt.Net.BCrypt.HashPassword("Doctor#123"),
+                    Role = "Doctor",
+                    FullName = "Dr. John Doe",
+                    CreatedAtUtc = DateTime.UtcNow
+                };
+                await db.Users.AddAsync(doctor);
+                doctorUserId = doctor.Id;
+
+                // Insurance Agency Representative
+                var agencyRep = new Domain.Entities.User
+                {
+                    Id = Guid.NewGuid(),
+                    Email = "agency@drtech.local",
+                    PasswordHash = BCrypt.Net.BCrypt.HashPassword("Agency#123"),
+                    Role = "InsuranceAgency",
+                    FullName = "Insurance Agency Rep",
+                    CreatedAtUtc = DateTime.UtcNow
+                };
+                await db.Users.AddAsync(agencyRep);
+                agencyRepUserId = agencyRep.Id;
+
+                // Insured User
+                var insuredUser = new Domain.Entities.User
+                {
+                    Id = Guid.NewGuid(),
+                    Email = "patient@drtech.local",
+                    PasswordHash = BCrypt.Net.BCrypt.HashPassword("Patient#123"),
+                    Role = "InsuredUser",
+                    FullName = "Jane Smith",
+                    CreatedAtUtc = DateTime.UtcNow
+                };
+                await db.Users.AddAsync(insuredUser);
+                insuredUserId = insuredUser.Id;
+            }
+            else
+            {
+                // Get existing user IDs
+                var existingUsers = await db.Users.ToListAsync();
+                hospitalAdminUserId = existingUsers.FirstOrDefault(u => u.Role == "HospitalAdmin")?.Id ?? Guid.Empty;
+                doctorUserId = existingUsers.FirstOrDefault(u => u.Role == "Doctor")?.Id ?? Guid.Empty;
+                agencyRepUserId = existingUsers.FirstOrDefault(u => u.Role == "InsuranceAgency")?.Id ?? Guid.Empty;
+                insuredUserId = existingUsers.FirstOrDefault(u => u.Role == "InsuredUser")?.Id ?? Guid.Empty;
             }
 
             // Hospitals & Departments
@@ -46,9 +103,11 @@ namespace drTech_backend.Infrastructure
                 {
                     Id = Guid.NewGuid(),
                     Name = "City Hospital",
-                    City = "Belgrade"
+                    City = "Belgrade",
+                    UserId = hospitalAdminUserId
                 };
                 await db.Hospitals.AddAsync(hospitalEntity);
+                await db.SaveChangesAsync(); 
             }
 
             Domain.Entities.Department? departmentEntity = await db.Departments.FirstOrDefaultAsync();
@@ -62,6 +121,7 @@ namespace drTech_backend.Infrastructure
                     HospitalId = hospitalEntity.Id
                 };
                 await db.Departments.AddAsync(departmentEntity);
+                await db.SaveChangesAsync(); // Save Department first so Doctor can reference it
             }
 
             // Doctors
@@ -74,7 +134,8 @@ namespace drTech_backend.Infrastructure
                     Id = Guid.NewGuid(),
                     FullName = "Dr. John Doe",
                     Specialty = "General Surgery",
-                    DepartmentId = departmentEntity.Id
+                    DepartmentId = departmentEntity.Id,
+                    UserId = doctorUserId
                 };
                 await db.Doctors.AddAsync(newDoctor);
                 // ensure persisted so subsequent queries see it
@@ -95,9 +156,11 @@ namespace drTech_backend.Infrastructure
                     Id = Guid.NewGuid(),
                     FullName = "Jane Smith",
                     InsuranceNumber = "INS-0001",
-                    Allergies = "None"
+                    Allergies = "None",
+                    UserId = insuredUserId
                 };
                 await db.Patients.AddAsync(patientEntity);
+                await db.SaveChangesAsync(); 
             }
 
             // Equipment
@@ -141,9 +204,11 @@ namespace drTech_backend.Infrastructure
                 {
                     Id = Guid.NewGuid(),
                     Name = "Sample Insurance Agency",
-                    City = "Belgrade"
+                    City = "Belgrade",
+                    UserId = agencyRepUserId
                 };
                 await db.InsuranceAgencies.AddAsync(agencyEntity);
+                await db.SaveChangesAsync(); 
             }
 
             // Agency Contracts
@@ -239,6 +304,115 @@ namespace drTech_backend.Infrastructure
                 });
             }
 
+            // Equipment Status Logs
+            if (!await db.EquipmentStatusLogs.AnyAsync())
+            {
+                await db.EquipmentStatusLogs.AddAsync(new Domain.Entities.EquipmentStatusLog
+                {
+                    Id = Guid.NewGuid(),
+                    EquipmentId = equipmentEntity.Id,
+                    Status = "Operational",
+                    Note = "Equipment registered and operational",
+                    LoggedAtUtc = DateTime.UtcNow
+                });
+            }
+
+            // Equipment Service Orders
+            if (!await db.EquipmentServiceOrders.AnyAsync())
+            {
+                await db.EquipmentServiceOrders.AddAsync(new Domain.Entities.EquipmentServiceOrder
+                {
+                    Id = Guid.NewGuid(),
+                    EquipmentId = equipmentEntity.Id,
+                    Type = "Service",
+                    ScheduledAtUtc = DateTime.UtcNow.AddMonths(6),
+                    Status = "Scheduled"
+                });
+            }
+
+            // Discounts
+            if (!await db.Discounts.AnyAsync())
+            {
+                await db.Discounts.AddAsync(new Domain.Entities.Discount
+                {
+                    Id = Guid.NewGuid(),
+                    PatientId = patientEntity.Id,
+                    HospitalId = hospitalEntity.Id,
+                    DiscountPercent = 10,
+                    MaxDiscountAmount = 100,
+                    Reason = "TotalValue",
+                    ValidFrom = DateTime.UtcNow,
+                    ValidUntil = DateTime.UtcNow.AddMonths(6),
+                    IsActive = true,
+                    Status = "Approved"
+                });
+            }
+
+            // Discount Requests
+            if (!await db.DiscountRequests.AnyAsync())
+            {
+                await db.DiscountRequests.AddAsync(new Domain.Entities.DiscountRequest
+                {
+                    Id = Guid.NewGuid(),
+                    InsuranceAgencyId = agencyEntity.Id,
+                    HospitalId = hospitalEntity.Id,
+                    PatientId = patientEntity.Id,
+                    RequestedDiscountPercent = 15,
+                    Reason = "Children",
+                    Explanation = "Patient is under 18 years old",
+                    Status = "Pending",
+                    RequestedAtUtc = DateTime.UtcNow
+                });
+            }
+
+            // Error Logs
+            if (!await db.ErrorLogs.AnyAsync())
+            {
+                await db.ErrorLogs.AddAsync(new Domain.Entities.ErrorLog
+                {
+                    Id = Guid.NewGuid(),
+                    ErrorType = "4xx",
+                    StatusCode = 404,
+                    Message = "Resource not found",
+                    RequestPath = "/api/test/notfound",
+                    RequestMethod = "GET",
+                    UserId = "system",
+                    OccurredAtUtc = DateTime.UtcNow.AddHours(-1)
+                });
+            }
+
+            // Request Logs
+            if (!await db.RequestLogs.AnyAsync())
+            {
+                await db.RequestLogs.AddAsync(new Domain.Entities.RequestLog
+                {
+                    Id = Guid.NewGuid(),
+                    UserId = "system",
+                    IpAddress = "127.0.0.1",
+                    Endpoint = "/api/hospitals",
+                    HttpMethod = "GET",
+                    StatusCode = 200,
+                    ResponseTimeMs = 150,
+                    TimestampUtc = DateTime.UtcNow.AddMinutes(-30)
+                });
+            }
+
+            // Throttle Logs
+            if (!await db.ThrottleLogs.AnyAsync())
+            {
+                await db.ThrottleLogs.AddAsync(new Domain.Entities.ThrottleLog
+                {
+                    Id = Guid.NewGuid(),
+                    UserId = "test-user",
+                    IpAddress = "192.168.1.100",
+                    RequestCount = 105,
+                    WindowStartUtc = DateTime.UtcNow.AddMinutes(-10),
+                    WindowEndUtc = DateTime.UtcNow,
+                    IsBlocked = true,
+                    BlockedUntilUtc = DateTime.UtcNow.AddMinutes(5)
+                });
+            }
+
             // Audit Logs
             if (!await db.AuditLogs.AnyAsync())
             {
@@ -251,12 +425,49 @@ namespace drTech_backend.Infrastructure
                     Method = "SYSTEM",
                     StatusCode = 200,
                     OccurredAtUtc = DateTime.UtcNow,
-                    Description = "Initial seed completed"
+                    Description = "Initial seed completed with comprehensive data"
                 });
             }
 
+            // Update User entities with foreign key relationships
+            if (hospitalAdminUserId != Guid.Empty && hospitalEntity != null)
+            {
+                var hospitalAdminUser = await db.Users.FindAsync(hospitalAdminUserId);
+                if (hospitalAdminUser != null)
+                {
+                    hospitalAdminUser.HospitalId = hospitalEntity.Id;
+                }
+            }
+
+            if (doctorUserId != Guid.Empty && doctorId != Guid.Empty)
+            {
+                var doctorUser = await db.Users.FindAsync(doctorUserId);
+                if (doctorUser != null)
+                {
+                    doctorUser.DoctorId = doctorId;
+                }
+            }
+
+            if (insuredUserId != Guid.Empty && patientEntity != null)
+            {
+                var insuredUser = await db.Users.FindAsync(insuredUserId);
+                if (insuredUser != null)
+                {
+                    insuredUser.PatientId = patientEntity.Id;
+                }
+            }
+
+            if (agencyRepUserId != Guid.Empty && agencyEntity != null)
+            {
+                var agencyUser = await db.Users.FindAsync(agencyRepUserId);
+                if (agencyUser != null)
+                {
+                    agencyUser.InsuranceAgencyId = agencyEntity.Id;
+                }
+            }
+
             await db.SaveChangesAsync();
-            logger.LogInformation("Database migrated and seeded");
+            logger.LogInformation("Database migrated and seeded with comprehensive data");
         }
     }
 }

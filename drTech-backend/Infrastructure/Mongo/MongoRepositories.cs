@@ -41,6 +41,14 @@ namespace drTech_backend.Infrastructure.Mongo
                 nameof(Domain.Entities.User) => "Users",
                 nameof(Domain.Entities.RefreshToken) => "RefreshTokens",
                 nameof(Domain.Entities.AuditLog) => "AuditLogs",
+                nameof(Domain.Entities.Discount) => "Discounts",
+                nameof(Domain.Entities.DiscountRequest) => "DiscountRequests",
+                nameof(Domain.Entities.ErrorLog) => "ErrorLogs",
+                nameof(Domain.Entities.RequestLog) => "RequestLogs",
+                nameof(Domain.Entities.ThrottleLog) => "ThrottleLogs",
+                nameof(Domain.Entities.EquipmentStatusLog) => "EquipmentStatusLogs",
+                nameof(Domain.Entities.EquipmentServiceOrder) => "EquipmentServiceOrders",
+                nameof(Domain.Entities.PreContract) => "PreContracts",
                 _ => entityType.Name + "s"
             };
         }

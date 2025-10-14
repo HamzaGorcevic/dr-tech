@@ -67,6 +67,62 @@ namespace drTech_backend.Infrastructure
             services.AddScoped<Application.Common.Mediator.GetAllPriceListItemsQueryHandler>();
             services.AddScoped<Application.Common.Mediator.CreatePriceListItemCommandHandler>();
 
+            // Equipment handlers
+            services.AddScoped<Application.Common.Mediator.GetAllEquipmentQueryHandler>();
+            services.AddScoped<Application.Common.Mediator.GetByIdEquipmentQueryHandler>();
+            services.AddScoped<Application.Common.Mediator.CreateEquipmentCommandHandler>();
+            services.AddScoped<Application.Common.Mediator.UpdateEquipmentCommandHandler>();
+            services.AddScoped<Application.Common.Mediator.DeleteEquipmentCommandHandler>();
+
+            // Appointment handlers
+            services.AddScoped<Application.Common.Mediator.GetAllAppointmentsQueryHandler>();
+            services.AddScoped<Application.Common.Mediator.GetByIdAppointmentQueryHandler>();
+            services.AddScoped<Application.Common.Mediator.CreateAppointmentCommandHandler>();
+            services.AddScoped<Application.Common.Mediator.UpdateAppointmentCommandHandler>();
+            services.AddScoped<Application.Common.Mediator.DeleteAppointmentCommandHandler>();
+
+            // User handlers
+            services.AddScoped<Application.Common.Mediator.GetAllUsersQueryHandler>();
+            services.AddScoped<Application.Common.Mediator.GetByIdUserQueryHandler>();
+            services.AddScoped<Application.Common.Mediator.CreateUserCommandHandler>();
+            services.AddScoped<Application.Common.Mediator.UpdateUserCommandHandler>();
+            services.AddScoped<Application.Common.Mediator.DeleteUserCommandHandler>();
+
+            // Auth handlers
+            services.AddScoped<Application.Common.Mediator.RegisterCommandHandler>();
+            services.AddScoped<Application.Common.Mediator.LoginCommandHandler>();
+            services.AddScoped<Application.Common.Mediator.RefreshTokenCommandHandler>();
+            services.AddScoped<Application.Common.Mediator.GoogleLoginCommandHandler>();
+            services.AddScoped<Application.Common.Mediator.GetUserProfileQueryHandler>();
+
+            // Discount handlers
+            services.AddScoped<Application.Common.Mediator.GetAllDiscountsQueryHandler>();
+            services.AddScoped<Application.Common.Mediator.GetByIdDiscountQueryHandler>();
+            services.AddScoped<Application.Common.Mediator.CreateDiscountCommandHandler>();
+            services.AddScoped<Application.Common.Mediator.UpdateDiscountCommandHandler>();
+            services.AddScoped<Application.Common.Mediator.DeleteDiscountCommandHandler>();
+
+            // DiscountRequest handlers
+            services.AddScoped<Application.Common.Mediator.GetAllDiscountRequestsQueryHandler>();
+            services.AddScoped<Application.Common.Mediator.GetByIdDiscountRequestQueryHandler>();
+            services.AddScoped<Application.Common.Mediator.CreateDiscountRequestCommandHandler>();
+            services.AddScoped<Application.Common.Mediator.UpdateDiscountRequestCommandHandler>();
+            services.AddScoped<Application.Common.Mediator.DeleteDiscountRequestCommandHandler>();
+
+            // EquipmentStatusLog handlers
+            services.AddScoped<Application.Common.Mediator.GetAllEquipmentStatusLogsQueryHandler>();
+            services.AddScoped<Application.Common.Mediator.GetByIdEquipmentStatusLogQueryHandler>();
+            services.AddScoped<Application.Common.Mediator.CreateEquipmentStatusLogCommandHandler>();
+            services.AddScoped<Application.Common.Mediator.UpdateEquipmentStatusLogCommandHandler>();
+            services.AddScoped<Application.Common.Mediator.DeleteEquipmentStatusLogCommandHandler>();
+
+            // EquipmentServiceOrder handlers
+            services.AddScoped<Application.Common.Mediator.GetAllEquipmentServiceOrdersQueryHandler>();
+            services.AddScoped<Application.Common.Mediator.GetByIdEquipmentServiceOrderQueryHandler>();
+            services.AddScoped<Application.Common.Mediator.CreateEquipmentServiceOrderCommandHandler>();
+            services.AddScoped<Application.Common.Mediator.UpdateEquipmentServiceOrderCommandHandler>();
+            services.AddScoped<Application.Common.Mediator.DeleteEquipmentServiceOrderCommandHandler>();
+
             // Database abstraction layer
             var dbProvider = Enum.Parse<Abstractions.DatabaseProvider>(configuration["DatabaseProvider"] ?? "PostgreSQL");
             services.AddSingleton(typeof(Abstractions.DatabaseProvider), dbProvider);
@@ -102,6 +158,20 @@ namespace drTech_backend.Infrastructure
                 new Abstractions.DatabaseService<Domain.Entities.RefreshToken>(dbProvider, provider));
             services.AddScoped<Abstractions.IDatabaseService<Domain.Entities.AuditLog>>(provider => 
                 new Abstractions.DatabaseService<Domain.Entities.AuditLog>(dbProvider, provider));
+            services.AddScoped<Abstractions.IDatabaseService<Domain.Entities.RequestLog>>(provider => 
+                new Abstractions.DatabaseService<Domain.Entities.RequestLog>(dbProvider, provider));
+            services.AddScoped<Abstractions.IDatabaseService<Domain.Entities.ErrorLog>>(provider => 
+                new Abstractions.DatabaseService<Domain.Entities.ErrorLog>(dbProvider, provider));
+            services.AddScoped<Abstractions.IDatabaseService<Domain.Entities.ThrottleLog>>(provider => 
+                new Abstractions.DatabaseService<Domain.Entities.ThrottleLog>(dbProvider, provider));
+            services.AddScoped<Abstractions.IDatabaseService<Domain.Entities.Discount>>(provider => 
+                new Abstractions.DatabaseService<Domain.Entities.Discount>(dbProvider, provider));
+            services.AddScoped<Abstractions.IDatabaseService<Domain.Entities.DiscountRequest>>(provider => 
+                new Abstractions.DatabaseService<Domain.Entities.DiscountRequest>(dbProvider, provider));
+            services.AddScoped<Abstractions.IDatabaseService<Domain.Entities.EquipmentStatusLog>>(provider => 
+                new Abstractions.DatabaseService<Domain.Entities.EquipmentStatusLog>(dbProvider, provider));
+            services.AddScoped<Abstractions.IDatabaseService<Domain.Entities.EquipmentServiceOrder>>(provider => 
+                new Abstractions.DatabaseService<Domain.Entities.EquipmentServiceOrder>(dbProvider, provider));
 
             services.Configure<Middleware.ThrottlingOptions>(configuration.GetSection("Throttling"));
 
