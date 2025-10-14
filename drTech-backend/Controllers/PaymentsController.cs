@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
-using drTech_backend.Infrastructure.Abstractions;
+using MediatR;
+using drTech_backend.Application.Common.Mediator;
 
 namespace drTech_backend.Controllers
 {
@@ -7,11 +8,11 @@ namespace drTech_backend.Controllers
     [Route("api/[controller]")]
     public class PaymentsController : ControllerBase
     {
-        private readonly IDatabaseService<Domain.Entities.Payment> _db;
-        public PaymentsController(IDatabaseService<Domain.Entities.Payment> db) { _db = db; }
+        private readonly IMediator _mediator;
+        public PaymentsController(IMediator mediator) { _mediator = mediator; }
 
         [HttpGet]
-        public async Task<IActionResult> GetAll(CancellationToken cancellationToken) => Ok(await _db.GetAllAsync(cancellationToken));
+        public async Task<IActionResult> GetAll(CancellationToken cancellationToken) => Ok(await _mediator.Send(new GetAllQuery<Domain.Entities.Payment>(), cancellationToken));
 
         public class PaymentUploadDto
         {
@@ -46,8 +47,7 @@ namespace drTech_backend.Controllers
                 payment.ProofUrl = path;
             }
 
-            await _db.AddAsync(payment, cancellationToken);
-            await _db.SaveChangesAsync(cancellationToken);
+            await _mediator.Send(new CreateCommand<Domain.Entities.Payment>(payment), cancellationToken);
             return Ok(payment);
         }
     }

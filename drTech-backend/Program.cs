@@ -83,9 +83,8 @@ namespace drTech_backend
             builder.Services.AddEndpointsApiExplorer();
             builder.Services.AddSwaggerGen();
 
-            // Infrastructure + Repositories + MediatR + AutoMapper
-            builder.Services.AddInfrastructure(builder.Configuration)
-                             .AddRepositories();
+            // Infrastructure + MediatR + AutoMapper
+            builder.Services.AddInfrastructure(builder.Configuration);
 
             // Auth (JWT + Google) placeholders; actual keys from config
             builder.Services.AddAuthentication(options =>
@@ -97,10 +96,14 @@ namespace drTech_backend
             {
                 options.TokenValidationParameters = new Microsoft.IdentityModel.Tokens.TokenValidationParameters
                 {
-                    ValidateIssuer = false,
-                    ValidateAudience = false,
-                    ValidateIssuerSigningKey = false,
-                    ValidateLifetime = true
+                    ValidateIssuer = true,
+                    ValidIssuer = builder.Configuration["Jwt:Issuer"],
+                    ValidateAudience = true,
+                    ValidAudience = builder.Configuration["Jwt:Audience"],
+                    ValidateIssuerSigningKey = true,
+                    IssuerSigningKey = new Microsoft.IdentityModel.Tokens.SymmetricSecurityKey(System.Text.Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"] ?? string.Empty)),
+                    ValidateLifetime = true,
+                    ClockSkew = TimeSpan.FromMinutes(1)
                 };
             })
             .AddGoogle(options =>

@@ -24,8 +24,48 @@ namespace drTech_backend.Infrastructure
                 }
             });
 
-            services.AddMediatR(typeof(DependencyInjection).Assembly);
+            services.AddMediatR(AppDomain.CurrentDomain.GetAssemblies());
             services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
+
+            // Register concrete MediatR handlers
+            services.AddScoped<Application.Common.Mediator.GetAllInsuranceAgenciesQueryHandler>();
+            services.AddScoped<Application.Common.Mediator.GetByIdInsuranceAgencyQueryHandler>();
+            services.AddScoped<Application.Common.Mediator.CreateInsuranceAgencyCommandHandler>();
+            services.AddScoped<Application.Common.Mediator.UpdateInsuranceAgencyCommandHandler>();
+            services.AddScoped<Application.Common.Mediator.DeleteInsuranceAgencyCommandHandler>();
+
+            services.AddScoped<Application.Common.Mediator.GetAllHospitalsQueryHandler>();
+            services.AddScoped<Application.Common.Mediator.GetByIdHospitalQueryHandler>();
+            services.AddScoped<Application.Common.Mediator.CreateHospitalCommandHandler>();
+            services.AddScoped<Application.Common.Mediator.UpdateHospitalCommandHandler>();
+            services.AddScoped<Application.Common.Mediator.DeleteHospitalCommandHandler>();
+
+            services.AddScoped<Application.Common.Mediator.GetAllPatientsQueryHandler>();
+            services.AddScoped<Application.Common.Mediator.GetByIdPatientQueryHandler>();
+            services.AddScoped<Application.Common.Mediator.CreatePatientCommandHandler>();
+            services.AddScoped<Application.Common.Mediator.UpdatePatientCommandHandler>();
+            services.AddScoped<Application.Common.Mediator.DeletePatientCommandHandler>();
+
+            services.AddScoped<Application.Common.Mediator.GetAllDoctorsQueryHandler>();
+            services.AddScoped<Application.Common.Mediator.CreateDoctorCommandHandler>();
+
+            services.AddScoped<Application.Common.Mediator.GetAllDepartmentsQueryHandler>();
+            services.AddScoped<Application.Common.Mediator.CreateDepartmentCommandHandler>();
+
+            services.AddScoped<Application.Common.Mediator.GetAllPaymentsQueryHandler>();
+            services.AddScoped<Application.Common.Mediator.CreatePaymentCommandHandler>();
+
+            services.AddScoped<Application.Common.Mediator.GetAllReservationsQueryHandler>();
+            services.AddScoped<Application.Common.Mediator.CreateReservationCommandHandler>();
+
+            services.AddScoped<Application.Common.Mediator.GetAllAgencyContractsQueryHandler>();
+            services.AddScoped<Application.Common.Mediator.CreateAgencyContractCommandHandler>();
+
+            services.AddScoped<Application.Common.Mediator.GetAllMedicalServicesQueryHandler>();
+            services.AddScoped<Application.Common.Mediator.CreateMedicalServiceCommandHandler>();
+
+            services.AddScoped<Application.Common.Mediator.GetAllPriceListItemsQueryHandler>();
+            services.AddScoped<Application.Common.Mediator.CreatePriceListItemCommandHandler>();
 
             // Database abstraction layer
             var dbProvider = Enum.Parse<Abstractions.DatabaseProvider>(configuration["DatabaseProvider"] ?? "PostgreSQL");
@@ -96,6 +136,7 @@ namespace drTech_backend.Infrastructure
 
             return services;
         }
+
 
     }
 }

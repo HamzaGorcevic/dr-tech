@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
-using drTech_backend.Infrastructure.Abstractions;
+using MediatR;
+using drTech_backend.Application.Common.Mediator;
 
 namespace drTech_backend.Controllers
 {
@@ -7,11 +8,11 @@ namespace drTech_backend.Controllers
     [Route("api/[controller]")]
     public class DepartmentsController : ControllerBase
     {
-        private readonly IDatabaseService<Domain.Entities.Department> _db;
-        public DepartmentsController(IDatabaseService<Domain.Entities.Department> db) { _db = db; }
+        private readonly IMediator _mediator;
+        public DepartmentsController(IMediator mediator) { _mediator = mediator; }
 
         [HttpGet]
-        public async Task<IActionResult> GetAll(CancellationToken cancellationToken) => Ok(await _db.GetAllAsync(cancellationToken));
+        public async Task<IActionResult> GetAll(CancellationToken cancellationToken) => Ok(await _mediator.Send(new GetAllQuery<Domain.Entities.Department>(), cancellationToken));
 
         [HttpPost]
         public async Task<IActionResult> Create([FromBody] CreateDepartmentDto request, CancellationToken cancellationToken)
@@ -24,8 +25,7 @@ namespace drTech_backend.Controllers
                 HospitalId = request.HospitalId
             };
             
-            await _db.AddAsync(department, cancellationToken);
-            await _db.SaveChangesAsync(cancellationToken);
+            await _mediator.Send(new CreateCommand<Domain.Entities.Department>(department), cancellationToken);
             
             var response = new DepartmentResponseDto
             {

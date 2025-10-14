@@ -1,7 +1,7 @@
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using drTech_backend.Infrastructure.Abstractions;
+using drTech_backend.Application.Common.Mediator;
 
 namespace drTech_backend.Controllers
 {
@@ -9,18 +9,18 @@ namespace drTech_backend.Controllers
     [Route("api/[controller]")]
     public class HospitalsController : ControllerBase
     {
-        private readonly IDatabaseService<Domain.Entities.Hospital> _db;
+        private readonly IMediator _mediator;
 
-        public HospitalsController(IDatabaseService<Domain.Entities.Hospital> db)
+        public HospitalsController(IMediator mediator)
         {
-            _db = db;
+            _mediator = mediator;
         }
 
         [HttpGet]
         [ProducesResponseType(StatusCodes.Status200OK)]
         public async Task<IActionResult> Get(CancellationToken cancellationToken)
         {
-            var items = await _db.GetAllAsync(cancellationToken);
+            var items = await _mediator.Send(new GetAllQuery<Domain.Entities.Hospital>(), cancellationToken);
             return Ok(items);
         }
 
@@ -35,8 +35,7 @@ namespace drTech_backend.Controllers
                 Departments = new List<Domain.Entities.Department>()
             };
             
-            await _db.AddAsync(hospital, cancellationToken);
-            await _db.SaveChangesAsync(cancellationToken);
+            await _mediator.Send(new CreateCommand<Domain.Entities.Hospital>(hospital), cancellationToken);
             
             var response = new HospitalResponseDto
             {

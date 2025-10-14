@@ -23,21 +23,25 @@ namespace drTech_backend.Infrastructure.Auth
 
         public string GenerateAccessToken(Domain.Entities.User user)
         {
-            var key = _configuration["Jwt:Key"] ?? "dev-secret-key-change";
+            var key = _configuration["Jwt:Key"];
+            if (string.IsNullOrWhiteSpace(key)) throw new InvalidOperationException("JWT key not configured.");
+            
             var creds = new SigningCredentials(new SymmetricSecurityKey(System.Text.Encoding.UTF8.GetBytes(key)), SecurityAlgorithms.HmacSha256);
 
+            var jti = Guid.NewGuid().ToString();
             var claims = new List<Claim>
             {
                 new Claim(JwtRegisteredClaimNames.Sub, user.Id.ToString()),
                 new Claim(JwtRegisteredClaimNames.Email, user.Email),
-                new Claim(ClaimTypes.Role, user.Role)
+                new Claim(JwtRegisteredClaimNames.Jti, jti),
+                new Claim(ClaimTypes.Role, user.Role ?? "User")
             };
 
             var token = new JwtSecurityToken(
                 issuer: _configuration["Jwt:Issuer"],
                 audience: _configuration["Jwt:Audience"],
                 claims: claims,
-                expires: DateTime.UtcNow.AddMinutes(int.TryParse(_configuration["Jwt:AccessTokenMinutes"], out var m) ? m : 30),
+                expires: DateTime.UtcNow.AddMinutes(int.TryParse(_configuration["Jwt:AccessTokenMinutes"], out var m) ? m : 15),
                 signingCredentials: creds
             );
 
