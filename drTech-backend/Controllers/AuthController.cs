@@ -51,7 +51,8 @@ namespace drTech_backend.Controllers
         {
             try
             {
-                var userId = User.FindFirst("sub")?.Value;
+                var userId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value
+                    ?? User.FindFirst(System.IdentityModel.Tokens.Jwt.JwtRegisteredClaimNames.Sub)?.Value;
                 if (string.IsNullOrEmpty(userId)) return Unauthorized();
 
                 var user = await _mediator.Send(new GetUserProfileQuery(Guid.Parse(userId)), cancellationToken);

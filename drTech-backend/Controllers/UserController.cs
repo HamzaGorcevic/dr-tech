@@ -47,7 +47,8 @@ namespace drTech_backend.Controllers
         [Authorize(Roles = "InsuredUser")]
         public async Task<IActionResult> GetProfile(CancellationToken cancellationToken)
         {
-            var userId = User.FindFirst("sub")?.Value;
+            var userId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value
+                ?? User.FindFirst(System.IdentityModel.Tokens.Jwt.JwtRegisteredClaimNames.Sub)?.Value;
             if (string.IsNullOrEmpty(userId) || !Guid.TryParse(userId, out var userGuid))
                 return Unauthorized();
 
@@ -74,7 +75,8 @@ namespace drTech_backend.Controllers
         [Authorize(Roles = "InsuredUser")]
         public async Task<IActionResult> UpdateProfile([FromBody] UpdateUserProfileDto request, CancellationToken cancellationToken)
         {
-            var userId = User.FindFirst("sub")?.Value;
+            var userId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value
+                ?? User.FindFirst(System.IdentityModel.Tokens.Jwt.JwtRegisteredClaimNames.Sub)?.Value;
             if (string.IsNullOrEmpty(userId) || !Guid.TryParse(userId, out var userGuid))
                 return Unauthorized();
 
@@ -180,7 +182,8 @@ namespace drTech_backend.Controllers
         [Authorize(Roles = "InsuredUser")]
         public async Task<IActionResult> RequestAppointment([FromBody] RequestAppointmentDto request, CancellationToken cancellationToken)
         {
-            var userId = User.FindFirst("sub")?.Value;
+            var userId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value
+                ?? User.FindFirst(System.IdentityModel.Tokens.Jwt.JwtRegisteredClaimNames.Sub)?.Value;
             if (string.IsNullOrEmpty(userId) || !Guid.TryParse(userId, out var userGuid))
                 return Unauthorized();
 
@@ -222,7 +225,8 @@ namespace drTech_backend.Controllers
         [Authorize(Roles = "InsuredUser")]
         public async Task<IActionResult> GetAppointments(CancellationToken cancellationToken)
         {
-            var userId = User.FindFirst("sub")?.Value;
+            var userId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value
+                ?? User.FindFirst(System.IdentityModel.Tokens.Jwt.JwtRegisteredClaimNames.Sub)?.Value;
             if (string.IsNullOrEmpty(userId) || !Guid.TryParse(userId, out var userGuid))
                 return Unauthorized();
 
@@ -241,7 +245,8 @@ namespace drTech_backend.Controllers
         [Authorize(Roles = "InsuredUser")]
         public async Task<IActionResult> GetDiscounts(CancellationToken cancellationToken)
         {
-            var userId = User.FindFirst("sub")?.Value;
+            var userId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value
+                ?? User.FindFirst(System.IdentityModel.Tokens.Jwt.JwtRegisteredClaimNames.Sub)?.Value;
             if (string.IsNullOrEmpty(userId) || !Guid.TryParse(userId, out var userGuid))
                 return Unauthorized();
 
@@ -260,7 +265,8 @@ namespace drTech_backend.Controllers
         [Authorize(Roles = "InsuredUser")]
         public async Task<IActionResult> RequestDiscount([FromBody] RequestDiscountDto request, CancellationToken cancellationToken)
         {
-            var userId = User.FindFirst("sub")?.Value;
+            var userId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value
+                ?? User.FindFirst(System.IdentityModel.Tokens.Jwt.JwtRegisteredClaimNames.Sub)?.Value;
             if (string.IsNullOrEmpty(userId) || !Guid.TryParse(userId, out var userGuid))
                 return Unauthorized();
 
