@@ -2,6 +2,8 @@ using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using drTech_backend.Application.Common.Mediator;
+using AutoMapper;
+using drTech_backend.Application.Common.DTOs;
 
 namespace drTech_backend.Controllers
 {
@@ -11,10 +13,12 @@ namespace drTech_backend.Controllers
     public class HospitalsController : ControllerBase
     {
         private readonly IMediator _mediator;
+        private readonly IMapper _mapper;
 
-        public HospitalsController(IMediator mediator)
+        public HospitalsController(IMediator mediator, IMapper mapper)
         {
             _mediator = mediator;
+            _mapper = mapper;
         }
 
         [HttpGet]
@@ -23,31 +27,18 @@ namespace drTech_backend.Controllers
         public async Task<IActionResult> Get(CancellationToken cancellationToken)
         {
             var items = await _mediator.Send(new GetAllQuery<Domain.Entities.Hospital>(), cancellationToken);
-            return Ok(items);
+            var dtos = items.Select(h => _mapper.Map<HospitalDto>(h)).ToList();
+            return Ok(dtos);
         }
 
         [HttpPost]
         [Authorize(Roles = "HospitalAdmin")]
-        public async Task<IActionResult> Create([FromBody] CreateHospitalDto request, CancellationToken cancellationToken)
+        public async Task<IActionResult> Create([FromBody] HospitalCreateDto request, CancellationToken cancellationToken)
         {
-            var hospital = new Domain.Entities.Hospital
-            {
-                Id = Guid.NewGuid(),
-                Name = request.Name,
-                City = request.City,
-                Departments = new List<Domain.Entities.Department>()
-            };
-            
+            var hospital = _mapper.Map<Domain.Entities.Hospital>(request);
+            hospital.Id = Guid.NewGuid();
             await _mediator.Send(new CreateCommand<Domain.Entities.Hospital>(hospital), cancellationToken);
-            
-            var response = new HospitalResponseDto
-            {
-                Id = hospital.Id,
-                Name = hospital.Name,
-                City = hospital.City,
-                DepartmentsCount = 0
-            };
-            
+            var response = _mapper.Map<HospitalDto>(hospital);
             return CreatedAtAction(nameof(Get), new { id = hospital.Id }, response);
         }
     }

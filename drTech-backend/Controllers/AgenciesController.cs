@@ -2,6 +2,8 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
 using MediatR;
 using drTech_backend.Application.Common.Mediator;
+using AutoMapper;
+using drTech_backend.Application.Common.DTOs;
 
 namespace drTech_backend.Controllers
 {
@@ -11,7 +13,8 @@ namespace drTech_backend.Controllers
     public class AgenciesController : ControllerBase
     {
         private readonly IMediator _mediator;
-        public AgenciesController(IMediator mediator) { _mediator = mediator; }
+        private readonly IMapper _mapper;
+        public AgenciesController(IMediator mediator, IMapper mapper) { _mediator = mediator; _mapper = mapper; }
 
         [HttpGet]
         [AllowAnonymous]
@@ -19,11 +22,13 @@ namespace drTech_backend.Controllers
 
         [HttpPost]
         [Authorize(Roles = "InsuranceAgency")]
-        public async Task<IActionResult> Create([FromBody] Domain.Entities.InsuranceAgency request, CancellationToken cancellationToken)
+        public async Task<IActionResult> Create([FromBody] InsuranceAgencyCreateDto request, CancellationToken cancellationToken)
         {
-            if (request.Id == Guid.Empty) request.Id = Guid.NewGuid();
-            await _mediator.Send(new CreateCommand<Domain.Entities.InsuranceAgency>(request), cancellationToken);
-            return CreatedAtAction(nameof(GetAll), new { id = request.Id }, request);
+            var entity = _mapper.Map<Domain.Entities.InsuranceAgency>(request);
+            entity.Id = Guid.NewGuid();
+            await _mediator.Send(new CreateCommand<Domain.Entities.InsuranceAgency>(entity), cancellationToken);
+            var response = _mapper.Map<InsuranceAgencyDto>(entity);
+            return CreatedAtAction(nameof(GetAll), new { id = entity.Id }, response);
         }
     }
 }

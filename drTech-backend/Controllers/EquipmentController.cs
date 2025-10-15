@@ -3,6 +3,8 @@ using Microsoft.AspNetCore.Authorization;
 using MediatR;
 using drTech_backend.Application.Common.Mediator;
 using drTech_backend.Infrastructure.Abstractions;
+using AutoMapper;
+using drTech_backend.Application.Common.DTOs;
 
 namespace drTech_backend.Controllers
 {
@@ -12,17 +14,20 @@ namespace drTech_backend.Controllers
     public class EquipmentController : ControllerBase
     {
         private readonly IMediator _mediator;
+        private readonly IMapper _mapper;
         private readonly IDatabaseService<Domain.Entities.Equipment> _equipmentDb;
         private readonly IDatabaseService<Domain.Entities.EquipmentStatusLog> _statusLogDb;
         private readonly IDatabaseService<Domain.Entities.EquipmentServiceOrder> _serviceOrderDb;
 
         public EquipmentController(
             IMediator mediator,
+            IMapper mapper,
             IDatabaseService<Domain.Entities.Equipment> equipmentDb,
             IDatabaseService<Domain.Entities.EquipmentStatusLog> statusLogDb,
             IDatabaseService<Domain.Entities.EquipmentServiceOrder> serviceOrderDb)
         {
             _mediator = mediator;
+            _mapper = mapper;
             _equipmentDb = equipmentDb;
             _statusLogDb = statusLogDb;
             _serviceOrderDb = serviceOrderDb;
@@ -32,29 +37,25 @@ namespace drTech_backend.Controllers
         public async Task<IActionResult> GetAll(CancellationToken cancellationToken)
         {
             var equipment = await _mediator.Send(new GetAllQuery<Domain.Entities.Equipment>(), cancellationToken);
-            return Ok(equipment);
+            var dtos = equipment.Select(e => _mapper.Map<EquipmentDto>(e)).ToList();
+            return Ok(dtos);
         }
 
         [HttpGet("{id:guid}")]
         public async Task<IActionResult> Get(Guid id, CancellationToken cancellationToken)
         {
             var equipment = await _mediator.Send(new GetByIdQuery<Domain.Entities.Equipment>(id), cancellationToken);
-            return equipment is null ? NotFound() : Ok(equipment);
+            return equipment is null ? NotFound() : Ok(_mapper.Map<EquipmentDto>(equipment));
         }
 
         [HttpPost]
         [Authorize(Roles = "HospitalAdmin")]
-        public async Task<IActionResult> Create([FromBody] CreateEquipmentDto request, CancellationToken cancellationToken)
+        public async Task<IActionResult> Create([FromBody] EquipmentCreateDto request, CancellationToken cancellationToken)
         {
-            var equipment = new Domain.Entities.Equipment
-            {
-                Id = Guid.NewGuid(),
-                SerialNumber = request.SerialNumber,
-                Type = request.Type,
-                Status = "Operational",
-                DepartmentId = request.DepartmentId,
-                IsWithdrawn = false
-            };
+            var equipment = _mapper.Map<Domain.Entities.Equipment>(request);
+            equipment.Id = Guid.NewGuid();
+            equipment.Status = "Operational";
+            equipment.IsWithdrawn = false;
 
             await _mediator.Send(new CreateCommand<Domain.Entities.Equipment>(equipment), cancellationToken);
 
@@ -69,7 +70,8 @@ namespace drTech_backend.Controllers
             };
             await _mediator.Send(new CreateCommand<Domain.Entities.EquipmentStatusLog>(statusLog), cancellationToken);
 
-            return CreatedAtAction(nameof(Get), new { id = equipment.Id }, equipment);
+            var response = _mapper.Map<EquipmentDto>(equipment);
+            return CreatedAtAction(nameof(Get), new { id = equipment.Id }, response);
         }
 
         [HttpPut("{id:guid}/status")]
@@ -95,7 +97,7 @@ namespace drTech_backend.Controllers
             };
             await _mediator.Send(new CreateCommand<Domain.Entities.EquipmentStatusLog>(statusLog), cancellationToken);
 
-            return Ok(equipment);
+            return Ok(_mapper.Map<EquipmentDto>(equipment));
         }
 
         [HttpPost("{id:guid}/schedule-service")]
@@ -116,7 +118,7 @@ namespace drTech_backend.Controllers
 
             await _mediator.Send(new CreateCommand<Domain.Entities.EquipmentServiceOrder>(serviceOrder), cancellationToken);
 
-            return Ok(serviceOrder);
+            return Ok(_mapper.Map<EquipmentServiceOrderDto>(serviceOrder));
         }
 
         [HttpGet("{id:guid}/status-history")]
@@ -124,7 +126,8 @@ namespace drTech_backend.Controllers
         {
             var logs = await _statusLogDb.GetAllAsync(cancellationToken);
             var equipmentLogs = logs.Where(log => log.EquipmentId == id).OrderByDescending(log => log.LoggedAtUtc);
-            return Ok(equipmentLogs);
+            var dtos = equipmentLogs.Select(l => _mapper.Map<EquipmentStatusLogDto>(l)).ToList();
+            return Ok(dtos);
         }
 
         [HttpGet("{id:guid}/service-orders")]
@@ -132,16 +135,12 @@ namespace drTech_backend.Controllers
         {
             var orders = await _serviceOrderDb.GetAllAsync(cancellationToken);
             var equipmentOrders = orders.Where(order => order.EquipmentId == id).OrderByDescending(order => order.ScheduledAtUtc);
-            return Ok(equipmentOrders);
+            var dtos = equipmentOrders.Select(o => _mapper.Map<EquipmentServiceOrderDto>(o)).ToList();
+            return Ok(dtos);
         }
     }
 
-    public class CreateEquipmentDto
-    {
-        public string SerialNumber { get; set; } = string.Empty;
-        public string Type { get; set; } = string.Empty;
-        public Guid DepartmentId { get; set; }
-    }
+    // moved to Application.Common.DTOs
 
     public class UpdateEquipmentStatusDto
     {

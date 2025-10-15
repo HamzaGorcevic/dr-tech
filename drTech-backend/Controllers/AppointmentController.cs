@@ -2,6 +2,8 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
 using MediatR;
 using drTech_backend.Application.Common.Mediator;
+using AutoMapper;
+using drTech_backend.Application.Common.DTOs;
 using drTech_backend.Infrastructure.Abstractions;
 
 namespace drTech_backend.Controllers
@@ -12,6 +14,7 @@ namespace drTech_backend.Controllers
     public class AppointmentController : ControllerBase
     {
         private readonly IMediator _mediator;
+        private readonly IMapper _mapper;
         private readonly IDatabaseService<Domain.Entities.Appointment> _appointmentDb;
         private readonly IDatabaseService<Domain.Entities.Doctor> _doctorDb;
         private readonly IDatabaseService<Domain.Entities.Equipment> _equipmentDb;
@@ -19,12 +22,14 @@ namespace drTech_backend.Controllers
 
         public AppointmentController(
             IMediator mediator,
+            IMapper mapper,
             IDatabaseService<Domain.Entities.Appointment> appointmentDb,
             IDatabaseService<Domain.Entities.Doctor> doctorDb,
             IDatabaseService<Domain.Entities.Equipment> equipmentDb,
             IDatabaseService<Domain.Entities.Discount> discountDb)
         {
             _mediator = mediator;
+            _mapper = mapper;
             _appointmentDb = appointmentDb;
             _doctorDb = doctorDb;
             _equipmentDb = equipmentDb;
@@ -35,19 +40,20 @@ namespace drTech_backend.Controllers
         public async Task<IActionResult> GetAll(CancellationToken cancellationToken)
         {
             var appointments = await _mediator.Send(new GetAllQuery<Domain.Entities.Appointment>(), cancellationToken);
-            return Ok(appointments);
+            var dtos = appointments.Select(a => _mapper.Map<AppointmentDto>(a)).ToList();
+            return Ok(dtos);
         }
 
         [HttpGet("{id:guid}")]
         public async Task<IActionResult> Get(Guid id, CancellationToken cancellationToken)
         {
             var appointment = await _mediator.Send(new GetByIdQuery<Domain.Entities.Appointment>(id), cancellationToken);
-            return appointment is null ? NotFound() : Ok(appointment);
+            return appointment is null ? NotFound() : Ok(_mapper.Map<AppointmentDto>(appointment));
         }
 
         [HttpPost]
         [Authorize(Roles = "HospitalAdmin,Doctor")]
-        public async Task<IActionResult> Create([FromBody] CreateAppointmentDto request, CancellationToken cancellationToken)
+        public async Task<IActionResult> Create([FromBody] AppointmentCreateDto request, CancellationToken cancellationToken)
         {
             // Check doctor availability
             var doctor = await _mediator.Send(new GetByIdQuery<Domain.Entities.Doctor>(request.DoctorId), cancellationToken);
@@ -90,7 +96,8 @@ namespace drTech_backend.Controllers
             };
 
             await _mediator.Send(new CreateCommand<Domain.Entities.Appointment>(appointment), cancellationToken);
-            return CreatedAtAction(nameof(Get), new { id = appointment.Id }, appointment);
+            var response = _mapper.Map<AppointmentDto>(appointment);
+            return CreatedAtAction(nameof(Get), new { id = appointment.Id }, response);
         }
 
         [HttpPut("{id:guid}/reschedule")]
@@ -125,7 +132,7 @@ namespace drTech_backend.Controllers
             }
 
             await _mediator.Send(new UpdateCommand<Domain.Entities.Appointment>(appointment), cancellationToken);
-            return Ok(appointment);
+            return Ok(_mapper.Map<AppointmentDto>(appointment));
         }
 
         [HttpPut("{id:guid}/confirm")]
@@ -139,7 +146,7 @@ namespace drTech_backend.Controllers
             appointment.Status = "Confirmed";
 
             await _mediator.Send(new UpdateCommand<Domain.Entities.Appointment>(appointment), cancellationToken);
-            return Ok(appointment);
+            return Ok(_mapper.Map<AppointmentDto>(appointment));
         }
 
         [HttpPut("{id:guid}/cancel")]
@@ -175,19 +182,7 @@ namespace drTech_backend.Controllers
         }
     }
 
-    public class CreateAppointmentDto
-    {
-        public Guid HospitalId { get; set; }
-        public Guid DepartmentId { get; set; }
-        public Guid DoctorId { get; set; }
-        public Guid PatientId { get; set; }
-        public Guid? MedicalServiceId { get; set; }
-        public DateTime StartsAtUtc { get; set; }
-        public DateTime EndsAtUtc { get; set; }
-        public string Type { get; set; } = string.Empty;
-        public List<Guid>? RequiredEquipmentIds { get; set; }
-        public string? Notes { get; set; }
-    }
+    // moved to Application.Common.DTOs
 
     public class RescheduleAppointmentDto
     {

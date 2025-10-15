@@ -2,6 +2,8 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
 using MediatR;
 using drTech_backend.Application.Common.Mediator;
+using AutoMapper;
+using drTech_backend.Application.Common.DTOs;
 
 namespace drTech_backend.Controllers
 {
@@ -11,36 +13,27 @@ namespace drTech_backend.Controllers
     public class DepartmentsController : ControllerBase
     {
         private readonly IMediator _mediator;
-        public DepartmentsController(IMediator mediator) { _mediator = mediator; }
+        private readonly IMapper _mapper;
+        public DepartmentsController(IMediator mediator, IMapper mapper) { _mediator = mediator; _mapper = mapper; }
 
         [HttpGet]
         [AllowAnonymous]
-        public async Task<IActionResult> GetAll(CancellationToken cancellationToken) => Ok(await _mediator.Send(new GetAllQuery<Domain.Entities.Department>(), cancellationToken));
+        public async Task<IActionResult> GetAll(CancellationToken cancellationToken)
+        {
+            var items = await _mediator.Send(new GetAllQuery<Domain.Entities.Department>(), cancellationToken);
+            var dtos = items.Select(d => _mapper.Map<DepartmentDto>(d)).ToList();
+            return Ok(dtos);
+        }
 
         [HttpPost]
         [Authorize(Roles = "HospitalAdmin")]
-        public async Task<IActionResult> Create([FromBody] CreateDepartmentDto request, CancellationToken cancellationToken)
+        public async Task<IActionResult> Create([FromBody] DepartmentCreateDto request, CancellationToken cancellationToken)
         {
-            var department = new Domain.Entities.Department
-            {
-                Id = Guid.NewGuid(),
-                Name = request.Name,
-                DoctorsCount = request.DoctorsCount,
-                HospitalId = request.HospitalId
-            };
-            
-            await _mediator.Send(new CreateCommand<Domain.Entities.Department>(department), cancellationToken);
-            
-            var response = new DepartmentResponseDto
-            {
-                Id = department.Id,
-                Name = department.Name,
-                DoctorsCount = department.DoctorsCount,
-                HospitalId = department.HospitalId,
-                HospitalName = "Unknown"
-            };
-            
-            return CreatedAtAction(nameof(GetAll), new { id = department.Id }, response);
+            var entity = _mapper.Map<Domain.Entities.Department>(request);
+            entity.Id = Guid.NewGuid();
+            await _mediator.Send(new CreateCommand<Domain.Entities.Department>(entity), cancellationToken);
+            var response = _mapper.Map<DepartmentDto>(entity);
+            return CreatedAtAction(nameof(GetAll), new { id = entity.Id }, response);
         }
     }
 }

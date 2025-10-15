@@ -2,6 +2,8 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
 using MediatR;
 using drTech_backend.Application.Common.Mediator;
+using AutoMapper;
+using drTech_backend.Application.Common.DTOs;
 
 namespace drTech_backend.Controllers
 {
@@ -11,11 +13,17 @@ namespace drTech_backend.Controllers
     public class PaymentsController : ControllerBase
     {
         private readonly IMediator _mediator;
-        public PaymentsController(IMediator mediator) { _mediator = mediator; }
+        private readonly IMapper _mapper;
+        public PaymentsController(IMediator mediator, IMapper mapper) { _mediator = mediator; _mapper = mapper; }
 
         [HttpGet]
         [Authorize(Roles = "HospitalAdmin,InsuranceAgency,InsuredUser")]
-        public async Task<IActionResult> GetAll(CancellationToken cancellationToken) => Ok(await _mediator.Send(new GetAllQuery<Domain.Entities.Payment>(), cancellationToken));
+        public async Task<IActionResult> GetAll(CancellationToken cancellationToken)
+        {
+            var items = await _mediator.Send(new GetAllQuery<Domain.Entities.Payment>(), cancellationToken);
+            var dtos = items.Select(p => _mapper.Map<PaymentDto>(p)).ToList();
+            return Ok(dtos);
+        }
 
         public class PaymentUploadDto
         {
@@ -52,7 +60,8 @@ namespace drTech_backend.Controllers
             }
 
             await _mediator.Send(new CreateCommand<Domain.Entities.Payment>(payment), cancellationToken);
-            return Ok(payment);
+            var response = _mapper.Map<PaymentDto>(payment);
+            return Ok(response);
         }
     }
 }
