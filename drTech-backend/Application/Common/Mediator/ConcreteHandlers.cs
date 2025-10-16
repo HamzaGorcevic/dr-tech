@@ -201,6 +201,16 @@ namespace drTech_backend.Application.Common.Mediator
         }
     }
 
+    public class GetByIdDoctorQueryHandler : IRequestHandler<GetByIdQuery<Domain.Entities.Doctor>, Domain.Entities.Doctor?>
+    {
+        private readonly IDatabaseService<Domain.Entities.Doctor> _db;
+        public GetByIdDoctorQueryHandler(IDatabaseService<Domain.Entities.Doctor> db) { _db = db; }
+        public async Task<Domain.Entities.Doctor?> Handle(GetByIdQuery<Domain.Entities.Doctor> request, CancellationToken cancellationToken)
+        {
+            return await _db.GetByIdAsync(request.Id, cancellationToken);
+        }
+    }
+
     // Concrete handlers for Department
     public class GetAllDepartmentsQueryHandler : IRequestHandler<GetAllQuery<Domain.Entities.Department>, IReadOnlyList<Domain.Entities.Department>>
     {
@@ -225,6 +235,16 @@ namespace drTech_backend.Application.Common.Mediator
         }
     }
 
+    public class GetByIdDepartmentQueryHandler : IRequestHandler<GetByIdQuery<Domain.Entities.Department>, Domain.Entities.Department?>
+    {
+        private readonly IDatabaseService<Domain.Entities.Department> _db;
+        public GetByIdDepartmentQueryHandler(IDatabaseService<Domain.Entities.Department> db) { _db = db; }
+        public async Task<Domain.Entities.Department?> Handle(GetByIdQuery<Domain.Entities.Department> request, CancellationToken cancellationToken)
+        {
+            return await _db.GetByIdAsync(request.Id, cancellationToken);
+        }
+    }
+
     // Concrete handlers for Payment
     public class GetAllPaymentsQueryHandler : IRequestHandler<GetAllQuery<Domain.Entities.Payment>, IReadOnlyList<Domain.Entities.Payment>>
     {
@@ -246,6 +266,40 @@ namespace drTech_backend.Application.Common.Mediator
             await _db.AddAsync(request.Entity, cancellationToken);
             await _db.SaveChangesAsync(cancellationToken);
             return request.Entity;
+        }
+    }
+
+    // Concrete handlers for AuditLog
+    public class GetByIdAuditLogQueryHandler : IRequestHandler<GetByIdQuery<Domain.Entities.AuditLog>, Domain.Entities.AuditLog?>
+    {
+        private readonly IDatabaseService<Domain.Entities.AuditLog> _db;
+        public GetByIdAuditLogQueryHandler(IDatabaseService<Domain.Entities.AuditLog> db) { _db = db; }
+        public async Task<Domain.Entities.AuditLog?> Handle(GetByIdQuery<Domain.Entities.AuditLog> request, CancellationToken cancellationToken)
+        {
+            return await _db.GetByIdAsync(request.Id, cancellationToken);
+        }
+    }
+
+    // Concrete handlers for ErrorLog
+    public class GetByIdErrorLogQueryHandler : IRequestHandler<GetByIdQuery<Domain.Entities.ErrorLog>, Domain.Entities.ErrorLog?>
+    {
+        private readonly IDatabaseService<Domain.Entities.ErrorLog> _db;
+        public GetByIdErrorLogQueryHandler(IDatabaseService<Domain.Entities.ErrorLog> db) { _db = db; }
+        public async Task<Domain.Entities.ErrorLog?> Handle(GetByIdQuery<Domain.Entities.ErrorLog> request, CancellationToken cancellationToken)
+        {
+            return await _db.GetByIdAsync(request.Id, cancellationToken);
+        }
+    }
+
+    public class DeleteErrorLogCommandHandler : IRequestHandler<DeleteCommand<Domain.Entities.ErrorLog>, Unit>
+    {
+        private readonly IDatabaseService<Domain.Entities.ErrorLog> _db;
+        public DeleteErrorLogCommandHandler(IDatabaseService<Domain.Entities.ErrorLog> db) { _db = db; }
+        public async Task<Unit> Handle(DeleteCommand<Domain.Entities.ErrorLog> request, CancellationToken cancellationToken)
+        {
+            await _db.DeleteAsync(request.Id, cancellationToken);
+            await _db.SaveChangesAsync(cancellationToken);
+            return Unit.Value;
         }
     }
 

@@ -48,6 +48,7 @@ namespace drTech_backend.Application.Common.DTOs
         public string FullName { get; set; } = string.Empty;
         public string Specialty { get; set; } = string.Empty;
         public Guid DepartmentId { get; set; }
+        public Guid UserId { get; set; }
         public string WorkingHours { get; set; } = string.Empty;
         public bool IsAvailable { get; set; } = true;
     }
@@ -96,6 +97,7 @@ namespace drTech_backend.Application.Common.DTOs
         public string? MedicalHistory { get; set; }
         public string? CurrentTherapies { get; set; }
         public Guid? InsuranceAgencyId { get; set; }
+        public Guid UserId { get; set; }
     }
 
     // Appointments

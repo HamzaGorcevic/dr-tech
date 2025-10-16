@@ -59,7 +59,6 @@ namespace drTech_backend.Infrastructure
                 .HasForeignKey<Domain.Entities.InsuranceAgency>(ia => ia.UserId)
                 .OnDelete(DeleteBehavior.Cascade);
 
-            // Note: Check constraints will be added in a separate migration after data is fixed
         }
     }
 }

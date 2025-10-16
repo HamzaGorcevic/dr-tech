@@ -47,9 +47,11 @@ namespace drTech_backend.Infrastructure
             services.AddScoped<Application.Common.Mediator.DeletePatientCommandHandler>();
 
             services.AddScoped<Application.Common.Mediator.GetAllDoctorsQueryHandler>();
+            services.AddScoped<Application.Common.Mediator.GetByIdDoctorQueryHandler>();
             services.AddScoped<Application.Common.Mediator.CreateDoctorCommandHandler>();
 
             services.AddScoped<Application.Common.Mediator.GetAllDepartmentsQueryHandler>();
+            services.AddScoped<Application.Common.Mediator.GetByIdDepartmentQueryHandler>();
             services.AddScoped<Application.Common.Mediator.CreateDepartmentCommandHandler>();
 
             services.AddScoped<Application.Common.Mediator.GetAllPaymentsQueryHandler>();
@@ -66,6 +68,11 @@ namespace drTech_backend.Infrastructure
 
             services.AddScoped<Application.Common.Mediator.GetAllPriceListItemsQueryHandler>();
             services.AddScoped<Application.Common.Mediator.CreatePriceListItemCommandHandler>();
+
+            // Logs handlers
+            services.AddScoped<Application.Common.Mediator.GetByIdAuditLogQueryHandler>();
+            services.AddScoped<Application.Common.Mediator.GetByIdErrorLogQueryHandler>();
+            services.AddScoped<Application.Common.Mediator.DeleteErrorLogCommandHandler>();
 
             // Equipment handlers
             services.AddScoped<Application.Common.Mediator.GetAllEquipmentQueryHandler>();

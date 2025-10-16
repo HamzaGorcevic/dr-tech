@@ -37,6 +37,16 @@ namespace drTech_backend.Controllers
         [Authorize(Roles = "HospitalAdmin,Doctor,InsuranceAgency")]
         public async Task<IActionResult> Create([FromBody] PatientCreateDto request, CancellationToken cancellationToken)
         {
+            // Validate related FKs before creation
+            if (request.InsuranceAgencyId.HasValue)
+            {
+                var agency = await _mediator.Send(new GetByIdQuery<Domain.Entities.InsuranceAgency>(request.InsuranceAgencyId.Value), cancellationToken);
+                if (agency is null) return BadRequest("Invalid InsuranceAgencyId");
+            }
+
+            var user = await _mediator.Send(new GetByIdQuery<Domain.Entities.User>(request.UserId), cancellationToken);
+            if (user is null) return BadRequest("Invalid UserId");
+
             var entity = _mapper.Map<Domain.Entities.Patient>(request);
             entity.Id = Guid.NewGuid();
             await _mediator.Send(new CreateCommand<Domain.Entities.Patient>(entity), cancellationToken);
