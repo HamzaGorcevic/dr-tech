@@ -1,6 +1,9 @@
 using System.Net;
 using System.Text.Json;
 using drTech_backend.Infrastructure.Abstractions;
+using FluentValidation;
+using Microsoft.EntityFrameworkCore;
+using Npgsql;
 
 namespace drTech_backend.Middleware
 {
@@ -30,16 +33,58 @@ namespace drTech_backend.Middleware
             }
         }
 
-        private async Task HandleExceptionAsync(HttpContext context, Exception exception)
+		private async Task HandleExceptionAsync(HttpContext context, Exception exception)
         {
             var response = context.Response;
             response.ContentType = "application/json";
 
-            var errorResponse = new ErrorResponse();
+			var errorResponse = new ErrorResponse();
             var statusCode = HttpStatusCode.InternalServerError;
 
             switch (exception)
             {
+				case DbUpdateException dbex when dbex.InnerException is PostgresException pex:
+					// Map common Postgres error codes
+					if (pex.SqlState == "23505") // unique_violation
+					{
+						statusCode = HttpStatusCode.Conflict;
+						errorResponse.Message = "Unique constraint violation";
+						var field = InferFieldFromConstraint(pex.ConstraintName);
+						if (!string.IsNullOrEmpty(field))
+						{
+							errorResponse.Errors = new List<ValidationError>
+							{
+								new ValidationError
+								{
+									Field = field,
+									Messages = new List<string> { "Duplicate value not allowed" }
+								}
+							};
+						}
+					}
+					else if (pex.SqlState == "23503") // foreign_key_violation
+					{
+						statusCode = HttpStatusCode.BadRequest;
+						errorResponse.Message = "Invalid reference to related entity";
+					}
+					else
+					{
+						statusCode = HttpStatusCode.BadRequest;
+						errorResponse.Message = "Database constraint violation";
+					}
+					break;
+				case ValidationException vex:
+					statusCode = HttpStatusCode.BadRequest;
+					errorResponse.Message = "Validation failed";
+					errorResponse.Errors = vex.Errors
+						.GroupBy(e => e.PropertyName)
+						.Select(g => new ValidationError
+						{
+							Field = g.Key,
+							Messages = g.Select(e => e.ErrorMessage).Distinct().ToList()
+						})
+						.ToList();
+					break;
                 case ArgumentNullException:
                     statusCode = HttpStatusCode.BadRequest;
                     errorResponse.Message = "Invalid request parameters";
@@ -80,13 +125,25 @@ namespace drTech_backend.Middleware
             // Log error to database
             await LogErrorAsync(context, exception, (int)statusCode);
 
-            var jsonResponse = JsonSerializer.Serialize(errorResponse, new JsonSerializerOptions
+			var jsonResponse = JsonSerializer.Serialize(errorResponse, new JsonSerializerOptions
             {
                 PropertyNamingPolicy = JsonNamingPolicy.CamelCase
             });
 
             await response.WriteAsync(jsonResponse);
         }
+
+		private static string InferFieldFromConstraint(string? constraintName)
+		{
+			if (string.IsNullOrWhiteSpace(constraintName)) return string.Empty;
+			// Simple mapping for known unique indexes
+			if (constraintName.Contains("IX_Doctors_UserId", StringComparison.OrdinalIgnoreCase)) return "UserId";
+			if (constraintName.Contains("IX_Patients_UserId", StringComparison.OrdinalIgnoreCase)) return "UserId";
+			if (constraintName.Contains("IX_InsuranceAgencies_UserId", StringComparison.OrdinalIgnoreCase)) return "UserId";
+			if (constraintName.Contains("IX_Hospitals_UserId", StringComparison.OrdinalIgnoreCase)) return "UserId";
+			if (constraintName.Contains("IX_Users_Email", StringComparison.OrdinalIgnoreCase)) return "Email";
+			return string.Empty;
+		}
 
         private async Task LogErrorAsync(HttpContext context, Exception exception, int statusCode)
         {
@@ -118,13 +175,20 @@ namespace drTech_backend.Middleware
             }
         }
 
-        private class ErrorResponse
+		private class ErrorResponse
         {
             public string Message { get; set; } = string.Empty;
             public int StatusCode { get; set; }
             public DateTime Timestamp { get; set; }
             public string Path { get; set; } = string.Empty;
             public string Method { get; set; } = string.Empty;
+			public List<ValidationError>? Errors { get; set; }
         }
+
+		private class ValidationError
+		{
+			public string Field { get; set; } = string.Empty;
+			public List<string> Messages { get; set; } = new List<string>();
+		}
     }
 }

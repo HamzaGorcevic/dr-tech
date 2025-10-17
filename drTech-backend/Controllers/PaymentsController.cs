@@ -12,18 +12,18 @@ namespace drTech_backend.Controllers
     [Authorize]
     public class PaymentsController : ControllerBase
     {
-        private readonly IMediator _mediator;
-        private readonly IMapper _mapper;
-        public PaymentsController(IMediator mediator, IMapper mapper) { _mediator = mediator; _mapper = mapper; }
+		private readonly IMediator _mediator;
+		private readonly IMapper _mapper;
+		public PaymentsController(IMediator mediator, IMapper mapper) { _mediator = mediator; _mapper = mapper; }
 
         [HttpGet]
         [Authorize(Roles = "HospitalAdmin,InsuranceAgency,InsuredUser")]
-        public async Task<IActionResult> GetAll(CancellationToken cancellationToken)
-        {
-            var items = await _mediator.Send(new GetAllQuery<Domain.Entities.Payment>(), cancellationToken);
-            var dtos = items.Select(p => _mapper.Map<PaymentDto>(p)).ToList();
-            return Ok(dtos);
-        }
+		public async Task<IActionResult> GetAll(CancellationToken cancellationToken)
+		{
+			var items = await _mediator.Send(new GetAllQuery<Domain.Entities.Payment>(), cancellationToken);
+			var dtos = items.Select(p => _mapper.Map<PaymentDto>(p)).ToList();
+			return Ok(dtos);
+		}
 
         public class PaymentUploadDto
         {
@@ -59,7 +59,7 @@ namespace drTech_backend.Controllers
                 payment.ProofUrl = path;
             }
 
-            await _mediator.Send(new CreateCommand<Domain.Entities.Payment>(payment), cancellationToken);
+			await _mediator.Send(new CreateCommand<Domain.Entities.Payment>(payment), cancellationToken);
             var response = _mapper.Map<PaymentDto>(payment);
             return Ok(response);
         }

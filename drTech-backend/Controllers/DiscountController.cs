@@ -11,42 +11,33 @@ namespace drTech_backend.Controllers
     [Authorize]
     public class DiscountController : ControllerBase
     {
-        private readonly IMediator _mediator;
-        private readonly IDatabaseService<Domain.Entities.Discount> _discountDb;
-        private readonly IDatabaseService<Domain.Entities.DiscountRequest> _discountRequestDb;
-        private readonly IDatabaseService<Domain.Entities.PriceListItem> _priceListDb;
+		private readonly IMediator _mediator;
 
-        public DiscountController(
-            IMediator mediator,
-            IDatabaseService<Domain.Entities.Discount> discountDb,
-            IDatabaseService<Domain.Entities.DiscountRequest> discountRequestDb,
-            IDatabaseService<Domain.Entities.PriceListItem> priceListDb)
-        {
-            _mediator = mediator;
-            _discountDb = discountDb;
-            _discountRequestDb = discountRequestDb;
-            _priceListDb = priceListDb;
-        }
+		public DiscountController(
+			IMediator mediator)
+		{
+			_mediator = mediator;
+		}
 
         [HttpGet]
-        public async Task<IActionResult> GetAll(CancellationToken cancellationToken)
-        {
-            var discounts = await _mediator.Send(new GetAllQuery<Domain.Entities.Discount>(), cancellationToken);
-            return Ok(discounts);
-        }
+		public async Task<IActionResult> GetAll(CancellationToken cancellationToken)
+		{
+			var discounts = await _mediator.Send(new GetAllQuery<Domain.Entities.Discount>(), cancellationToken);
+			return Ok(discounts);
+		}
 
         [HttpGet("{id:guid}")]
-        public async Task<IActionResult> Get(Guid id, CancellationToken cancellationToken)
-        {
-            var discount = await _mediator.Send(new GetByIdQuery<Domain.Entities.Discount>(id), cancellationToken);
-            return discount is null ? NotFound() : Ok(discount);
-        }
+		public async Task<IActionResult> Get(Guid id, CancellationToken cancellationToken)
+		{
+			var discount = await _mediator.Send(new GetByIdQuery<Domain.Entities.Discount>(id), cancellationToken);
+			return discount is null ? NotFound() : Ok(discount);
+		}
 
         [HttpPost("calculate")]
         [Authorize(Roles = "InsuranceAgency,HospitalAdmin")]
-        public async Task<IActionResult> CalculateDiscount([FromBody] CalculateDiscountDto request, CancellationToken cancellationToken)
+		public async Task<IActionResult> CalculateDiscount([FromBody] CalculateDiscountDto request, CancellationToken cancellationToken)
         {
-            var priceList = await _priceListDb.GetAllAsync(cancellationToken);
+			var priceList = await _mediator.Send(new GetAllQuery<Domain.Entities.PriceListItem>(), cancellationToken);
             var totalValue = priceList
                 .Where(p => request.ServiceIds.Contains(p.MedicalServiceId))
                 .Sum(p => p.Price);
@@ -84,7 +75,7 @@ namespace drTech_backend.Controllers
 
         [HttpPost("request")]
         [Authorize(Roles = "InsuranceAgency")]
-        public async Task<IActionResult> RequestDiscount([FromBody] CreateDiscountRequestDto request, CancellationToken cancellationToken)
+		public async Task<IActionResult> RequestDiscount([FromBody] CreateDiscountRequestDto request, CancellationToken cancellationToken)
         {
             var discountRequest = new Domain.Entities.DiscountRequest
             {
@@ -99,37 +90,37 @@ namespace drTech_backend.Controllers
                 RequestedAtUtc = DateTime.UtcNow
             };
 
-            await _mediator.Send(new CreateCommand<Domain.Entities.DiscountRequest>(discountRequest), cancellationToken);
+			await _mediator.Send(new CreateCommand<Domain.Entities.DiscountRequest>(discountRequest), cancellationToken);
             return CreatedAtAction(nameof(GetDiscountRequest), new { id = discountRequest.Id }, discountRequest);
         }
 
         [HttpGet("requests")]
         [Authorize(Roles = "HospitalAdmin,InsuranceAgency")]
-        public async Task<IActionResult> GetDiscountRequests(CancellationToken cancellationToken)
-        {
-            var requests = await _mediator.Send(new GetAllQuery<Domain.Entities.DiscountRequest>(), cancellationToken);
-            return Ok(requests);
-        }
+		public async Task<IActionResult> GetDiscountRequests(CancellationToken cancellationToken)
+		{
+			var requests = await _mediator.Send(new GetAllQuery<Domain.Entities.DiscountRequest>(), cancellationToken);
+			return Ok(requests);
+		}
 
         [HttpGet("requests/{id:guid}")]
         [Authorize(Roles = "HospitalAdmin,InsuranceAgency")]
-        public async Task<IActionResult> GetDiscountRequest(Guid id, CancellationToken cancellationToken)
-        {
-            var request = await _mediator.Send(new GetByIdQuery<Domain.Entities.DiscountRequest>(id), cancellationToken);
-            return request is null ? NotFound() : Ok(request);
-        }
+		public async Task<IActionResult> GetDiscountRequest(Guid id, CancellationToken cancellationToken)
+		{
+			var request = await _mediator.Send(new GetByIdQuery<Domain.Entities.DiscountRequest>(id), cancellationToken);
+			return request is null ? NotFound() : Ok(request);
+		}
 
         [HttpPut("requests/{id:guid}/approve")]
         [Authorize(Roles = "HospitalAdmin")]
-        public async Task<IActionResult> ApproveDiscountRequest(Guid id, [FromBody] ApproveDiscountRequestDto request, CancellationToken cancellationToken)
+		public async Task<IActionResult> ApproveDiscountRequest(Guid id, [FromBody] ApproveDiscountRequestDto request, CancellationToken cancellationToken)
         {
-            var discountRequest = await _mediator.Send(new GetByIdQuery<Domain.Entities.DiscountRequest>(id), cancellationToken);
+			var discountRequest = await _mediator.Send(new GetByIdQuery<Domain.Entities.DiscountRequest>(id), cancellationToken);
             if (discountRequest is null) return NotFound();
 
             discountRequest.Status = "Approved";
             discountRequest.RespondedAtUtc = DateTime.UtcNow;
 
-            await _mediator.Send(new UpdateCommand<Domain.Entities.DiscountRequest>(discountRequest), cancellationToken);
+			await _mediator.Send(new UpdateCommand<Domain.Entities.DiscountRequest>(discountRequest), cancellationToken);
 
             // Create the actual discount
             var discount = new Domain.Entities.Discount
@@ -147,31 +138,31 @@ namespace drTech_backend.Controllers
                 Status = "Approved"
             };
 
-            await _mediator.Send(new CreateCommand<Domain.Entities.Discount>(discount), cancellationToken);
+			await _mediator.Send(new CreateCommand<Domain.Entities.Discount>(discount), cancellationToken);
 
             return Ok(new { discountRequest, discount });
         }
 
         [HttpPut("requests/{id:guid}/reject")]
         [Authorize(Roles = "HospitalAdmin")]
-        public async Task<IActionResult> RejectDiscountRequest(Guid id, [FromBody] RejectDiscountRequestDto request, CancellationToken cancellationToken)
+		public async Task<IActionResult> RejectDiscountRequest(Guid id, [FromBody] RejectDiscountRequestDto request, CancellationToken cancellationToken)
         {
-            var discountRequest = await _mediator.Send(new GetByIdQuery<Domain.Entities.DiscountRequest>(id), cancellationToken);
+			var discountRequest = await _mediator.Send(new GetByIdQuery<Domain.Entities.DiscountRequest>(id), cancellationToken);
             if (discountRequest is null) return NotFound();
 
             discountRequest.Status = "Rejected";
             discountRequest.RejectionReason = request.RejectionReason;
             discountRequest.RespondedAtUtc = DateTime.UtcNow;
 
-            await _mediator.Send(new UpdateCommand<Domain.Entities.DiscountRequest>(discountRequest), cancellationToken);
+			await _mediator.Send(new UpdateCommand<Domain.Entities.DiscountRequest>(discountRequest), cancellationToken);
             return Ok(discountRequest);
         }
 
         [HttpGet("patient/{patientId:guid}")]
         [Authorize(Roles = "HospitalAdmin,Doctor,InsuranceAgency,InsuredUser")]
-        public async Task<IActionResult> GetPatientDiscounts(Guid patientId, CancellationToken cancellationToken)
+		public async Task<IActionResult> GetPatientDiscounts(Guid patientId, CancellationToken cancellationToken)
         {
-            var discounts = await _discountDb.GetAllAsync(cancellationToken);
+			var discounts = await _mediator.Send(new GetAllQuery<Domain.Entities.Discount>(), cancellationToken);
             var patientDiscounts = discounts
                 .Where(d => d.PatientId == patientId && d.IsActive && d.ValidUntil > DateTime.UtcNow)
                 .OrderByDescending(d => d.ValidFrom);
@@ -180,13 +171,13 @@ namespace drTech_backend.Controllers
 
         [HttpPut("{id:guid}/deactivate")]
         [Authorize(Roles = "HospitalAdmin")]
-        public async Task<IActionResult> DeactivateDiscount(Guid id, CancellationToken cancellationToken)
+		public async Task<IActionResult> DeactivateDiscount(Guid id, CancellationToken cancellationToken)
         {
-            var discount = await _mediator.Send(new GetByIdQuery<Domain.Entities.Discount>(id), cancellationToken);
+			var discount = await _mediator.Send(new GetByIdQuery<Domain.Entities.Discount>(id), cancellationToken);
             if (discount is null) return NotFound();
 
             discount.IsActive = false;
-            await _mediator.Send(new UpdateCommand<Domain.Entities.Discount>(discount), cancellationToken);
+			await _mediator.Send(new UpdateCommand<Domain.Entities.Discount>(discount), cancellationToken);
             return Ok(discount);
         }
     }

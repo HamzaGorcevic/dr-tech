@@ -1,4 +1,5 @@
 using MediatR;
+using FluentValidation;
 using drTech_backend.Infrastructure.Abstractions;
 
 namespace drTech_backend.Application.Common.Mediator

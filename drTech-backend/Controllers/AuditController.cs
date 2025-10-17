@@ -11,21 +11,18 @@ namespace drTech_backend.Controllers
     [Authorize(Roles = "HospitalAdmin,InsuranceAgency")]
     public class AuditController : ControllerBase
     {
-        private readonly IMediator _mediator;
-        private readonly IDatabaseService<Domain.Entities.AuditLog> _auditLogDb;
+		private readonly IMediator _mediator;
 
-        public AuditController(
-            IMediator mediator,
-            IDatabaseService<Domain.Entities.AuditLog> auditLogDb)
-        {
-            _mediator = mediator;
-            _auditLogDb = auditLogDb;
-        }
+		public AuditController(
+			IMediator mediator)
+		{
+			_mediator = mediator;
+		}
 
         [HttpGet]
-        public async Task<IActionResult> GetAll([FromQuery] AuditFilterDto filter, CancellationToken cancellationToken)
+		public async Task<IActionResult> GetAll([FromQuery] AuditFilterDto filter, CancellationToken cancellationToken)
         {
-            var auditLogs = await _auditLogDb.GetAllAsync(cancellationToken);
+			var auditLogs = await _mediator.Send(new GetAllQuery<Domain.Entities.AuditLog>(), cancellationToken);
             
             // Apply filters
             if (!string.IsNullOrEmpty(filter.Actor))
@@ -60,16 +57,16 @@ namespace drTech_backend.Controllers
         }
 
         [HttpGet("{id:guid}")]
-        public async Task<IActionResult> Get(Guid id, CancellationToken cancellationToken)
+		public async Task<IActionResult> Get(Guid id, CancellationToken cancellationToken)
         {
-            var auditLog = await _mediator.Send(new GetByIdQuery<Domain.Entities.AuditLog>(id), cancellationToken);
+			var auditLog = await _mediator.Send(new GetByIdQuery<Domain.Entities.AuditLog>(id), cancellationToken);
             return auditLog is null ? NotFound() : Ok(auditLog);
         }
 
         [HttpGet("actor/{actor}")]
-        public async Task<IActionResult> GetByActor(string actor, CancellationToken cancellationToken, [FromQuery] int page = 1, [FromQuery] int pageSize = 50)
+		public async Task<IActionResult> GetByActor(string actor, CancellationToken cancellationToken, [FromQuery] int page = 1, [FromQuery] int pageSize = 50)
         {
-            var auditLogs = await _auditLogDb.GetAllAsync(cancellationToken);
+			var auditLogs = await _mediator.Send(new GetAllQuery<Domain.Entities.AuditLog>(), cancellationToken);
             var actorLogs = auditLogs
                 .Where(log => log.Actor.Contains(actor, StringComparison.OrdinalIgnoreCase))
                 .OrderByDescending(log => log.OccurredAtUtc)
@@ -81,9 +78,9 @@ namespace drTech_backend.Controllers
         }
 
         [HttpGet("action/{action}")]
-        public async Task<IActionResult> GetByAction(string action, CancellationToken cancellationToken, [FromQuery] int page = 1, [FromQuery] int pageSize = 50)
+		public async Task<IActionResult> GetByAction(string action, CancellationToken cancellationToken, [FromQuery] int page = 1, [FromQuery] int pageSize = 50)
         {
-            var auditLogs = await _auditLogDb.GetAllAsync(cancellationToken);
+			var auditLogs = await _mediator.Send(new GetAllQuery<Domain.Entities.AuditLog>(), cancellationToken);
             var actionLogs = auditLogs
                 .Where(log => log.Action == action)
                 .OrderByDescending(log => log.OccurredAtUtc)
@@ -96,9 +93,9 @@ namespace drTech_backend.Controllers
 
         [HttpGet("hospital/{hospitalId:guid}")]
         [Authorize(Roles = "HospitalAdmin")]
-        public async Task<IActionResult> GetByHospital(Guid hospitalId, CancellationToken cancellationToken, [FromQuery] int page = 1, [FromQuery] int pageSize = 50)
+		public async Task<IActionResult> GetByHospital(Guid hospitalId, CancellationToken cancellationToken, [FromQuery] int page = 1, [FromQuery] int pageSize = 50)
         {
-            var auditLogs = await _auditLogDb.GetAllAsync(cancellationToken);
+			var auditLogs = await _mediator.Send(new GetAllQuery<Domain.Entities.AuditLog>(), cancellationToken);
             var hospitalLogs = auditLogs
                 .Where(log => log.Path.Contains($"hospital/{hospitalId}", StringComparison.OrdinalIgnoreCase) ||
                              log.Description?.Contains($"HospitalId:{hospitalId}") == true)
@@ -112,9 +109,9 @@ namespace drTech_backend.Controllers
 
         [HttpGet("agency/{agencyId:guid}")]
         [Authorize(Roles = "InsuranceAgency")]
-        public async Task<IActionResult> GetByAgency(Guid agencyId, CancellationToken cancellationToken, [FromQuery] int page = 1, [FromQuery] int pageSize = 50)
+		public async Task<IActionResult> GetByAgency(Guid agencyId, CancellationToken cancellationToken, [FromQuery] int page = 1, [FromQuery] int pageSize = 50)
         {
-            var auditLogs = await _auditLogDb.GetAllAsync(cancellationToken);
+			var auditLogs = await _mediator.Send(new GetAllQuery<Domain.Entities.AuditLog>(), cancellationToken);
             var agencyLogs = auditLogs
                 .Where(log => log.Path.Contains($"agency/{agencyId}", StringComparison.OrdinalIgnoreCase) ||
                              log.Description?.Contains($"AgencyId:{agencyId}") == true)
@@ -127,9 +124,9 @@ namespace drTech_backend.Controllers
         }
 
         [HttpGet("summary")]
-        public async Task<IActionResult> GetSummary([FromQuery] DateTime? startDate, [FromQuery] DateTime? endDate, CancellationToken cancellationToken)
+		public async Task<IActionResult> GetSummary([FromQuery] DateTime? startDate, [FromQuery] DateTime? endDate, CancellationToken cancellationToken)
         {
-            var auditLogs = await _auditLogDb.GetAllAsync(cancellationToken);
+			var auditLogs = await _mediator.Send(new GetAllQuery<Domain.Entities.AuditLog>(), cancellationToken);
             
             if (startDate.HasValue)
                 auditLogs = auditLogs.Where(log => log.OccurredAtUtc >= startDate.Value).ToList();
@@ -165,9 +162,9 @@ namespace drTech_backend.Controllers
         }
 
         [HttpPost("export")]
-        public async Task<IActionResult> ExportAuditLogs([FromBody] AuditExportDto request, CancellationToken cancellationToken)
+		public async Task<IActionResult> ExportAuditLogs([FromBody] AuditExportDto request, CancellationToken cancellationToken)
         {
-            var auditLogs = await _auditLogDb.GetAllAsync(cancellationToken);
+			var auditLogs = await _mediator.Send(new GetAllQuery<Domain.Entities.AuditLog>(), cancellationToken);
             
             // Apply filters
             if (request.StartDate.HasValue)

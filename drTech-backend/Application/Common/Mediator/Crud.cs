@@ -1,5 +1,6 @@
 using MediatR;
 using drTech_backend.Infrastructure.Abstractions;
+using FluentValidation;
 
 namespace drTech_backend.Application.Common.Mediator
 {
@@ -15,57 +16,62 @@ namespace drTech_backend.Application.Common.Mediator
     // Handlers (generic, provider-agnostic through IDatabaseService<T>)
     public class GetAllQueryHandler<T> : IRequestHandler<GetAllQuery<T>, IReadOnlyList<T>> where T : class
     {
-        private readonly IDatabaseService<T> _db;
-        public GetAllQueryHandler(IDatabaseService<T> db) { _db = db; }
+        private readonly IUnitOfWork _uow;
+        public GetAllQueryHandler(IUnitOfWork uow) { _uow = uow; }
         public async Task<IReadOnlyList<T>> Handle(GetAllQuery<T> request, CancellationToken cancellationToken)
         {
-            var items = await _db.GetAllAsync(cancellationToken);
+            var repo = _uow.GetRepository<T>();
+            var items = await repo.GetAllAsync(cancellationToken);
             return items;
         }
     }
 
     public class GetByIdQueryHandler<T> : IRequestHandler<GetByIdQuery<T>, T?> where T : class
     {
-        private readonly IDatabaseService<T> _db;
-        public GetByIdQueryHandler(IDatabaseService<T> db) { _db = db; }
+        private readonly IUnitOfWork _uow;
+        public GetByIdQueryHandler(IUnitOfWork uow) { _uow = uow; }
         public async Task<T?> Handle(GetByIdQuery<T> request, CancellationToken cancellationToken)
         {
-            return await _db.GetByIdAsync(request.Id, cancellationToken);
+            var repo = _uow.GetRepository<T>();
+            return await repo.GetByIdAsync(request.Id, cancellationToken);
         }
     }
 
     public class CreateCommandHandler<T> : IRequestHandler<CreateCommand<T>, T> where T : class
     {
-        private readonly IDatabaseService<T> _db;
-        public CreateCommandHandler(IDatabaseService<T> db) { _db = db; }
+        private readonly IUnitOfWork _uow;
+        public CreateCommandHandler(IUnitOfWork uow) { _uow = uow; }
         public async Task<T> Handle(CreateCommand<T> request, CancellationToken cancellationToken)
         {
-            await _db.AddAsync(request.Entity, cancellationToken);
-            await _db.SaveChangesAsync(cancellationToken);
+            var repo = _uow.GetRepository<T>();
+            await repo.AddAsync(request.Entity, cancellationToken);
+            await _uow.SaveChangesAsync(cancellationToken);
             return request.Entity;
         }
     }
 
     public class UpdateCommandHandler<T> : IRequestHandler<UpdateCommand<T>, Unit> where T : class
     {
-        private readonly IDatabaseService<T> _db;
-        public UpdateCommandHandler(IDatabaseService<T> db) { _db = db; }
+        private readonly IUnitOfWork _uow;
+        public UpdateCommandHandler(IUnitOfWork uow) { _uow = uow; }
         public async Task<Unit> Handle(UpdateCommand<T> request, CancellationToken cancellationToken)
         {
-            await _db.UpdateAsync(request.Entity, cancellationToken);
-            await _db.SaveChangesAsync(cancellationToken);
+            var repo = _uow.GetRepository<T>();
+            await repo.UpdateAsync(request.Entity, cancellationToken);
+            await _uow.SaveChangesAsync(cancellationToken);
             return Unit.Value;
         }
     }
 
     public class DeleteCommandHandler<T> : IRequestHandler<DeleteCommand<T>, Unit> where T : class
     {
-        private readonly IDatabaseService<T> _db;
-        public DeleteCommandHandler(IDatabaseService<T> db) { _db = db; }
+        private readonly IUnitOfWork _uow;
+        public DeleteCommandHandler(IUnitOfWork uow) { _uow = uow; }
         public async Task<Unit> Handle(DeleteCommand<T> request, CancellationToken cancellationToken)
         {
-            await _db.DeleteAsync(request.Id, cancellationToken);
-            await _db.SaveChangesAsync(cancellationToken);
+            var repo = _uow.GetRepository<T>();
+            await repo.DeleteAsync(request.Id, cancellationToken);
+            await _uow.SaveChangesAsync(cancellationToken);
             return Unit.Value;
         }
     }

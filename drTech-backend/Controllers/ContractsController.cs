@@ -10,19 +10,19 @@ namespace drTech_backend.Controllers
     [Authorize]
     public class ContractsController : ControllerBase
     {
-        private readonly IMediator _mediator;
-        public ContractsController(IMediator mediator) { _mediator = mediator; }
+		private readonly IMediator _mediator;
+		public ContractsController(IMediator mediator) { _mediator = mediator; }
 
         [HttpGet]
         [Authorize(Roles = "HospitalAdmin,InsuranceAgency")]
-        public async Task<IActionResult> GetAll(CancellationToken cancellationToken) => Ok(await _mediator.Send(new GetAllQuery<Domain.Entities.AgencyContract>(), cancellationToken));
+		public async Task<IActionResult> GetAll(CancellationToken cancellationToken) => Ok(await _mediator.Send(new GetAllQuery<Domain.Entities.AgencyContract>(), cancellationToken));
 
         [HttpPost]
         [Authorize(Roles = "InsuranceAgency")]
-        public async Task<IActionResult> Create([FromBody] Domain.Entities.AgencyContract request, CancellationToken cancellationToken)
+		public async Task<IActionResult> Create([FromBody] Domain.Entities.AgencyContract request, CancellationToken cancellationToken)
         {
             if (request.Id == Guid.Empty) request.Id = Guid.NewGuid();
-            await _mediator.Send(new CreateCommand<Domain.Entities.AgencyContract>(request), cancellationToken);
+			await _mediator.Send(new CreateCommand<Domain.Entities.AgencyContract>(request), cancellationToken);
             return CreatedAtAction(nameof(GetAll), new { id = request.Id }, request);
         }
     }

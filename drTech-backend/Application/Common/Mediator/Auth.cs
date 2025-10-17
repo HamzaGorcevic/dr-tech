@@ -1,4 +1,6 @@
 using MediatR;
+using FluentValidation;
+using Microsoft.Extensions.DependencyInjection;
 using drTech_backend.Infrastructure.Abstractions;
 using drTech_backend.Infrastructure.Auth;
 

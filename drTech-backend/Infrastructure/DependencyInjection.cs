@@ -3,6 +3,9 @@ using MediatR;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 using drTech_backend.Infrastructure.Auth;
+using FluentValidation;
+using MediatR;
+using drTech_backend.Application.Common.Mediator;
 
 namespace drTech_backend.Infrastructure
 {
@@ -25,6 +28,8 @@ namespace drTech_backend.Infrastructure
             });
 
             services.AddMediatR(AppDomain.CurrentDomain.GetAssemblies());
+            services.AddValidatorsFromAssemblyContaining<Application.Common.Mediator.CreateDoctorValidator>();
+            services.AddTransient(typeof(IPipelineBehavior<,>), typeof(ValidationBehavior<,>));
             services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
 
             // Register concrete MediatR handlers
@@ -179,6 +184,9 @@ namespace drTech_backend.Infrastructure
                 new Abstractions.DatabaseService<Domain.Entities.EquipmentStatusLog>(dbProvider, provider));
             services.AddScoped<Abstractions.IDatabaseService<Domain.Entities.EquipmentServiceOrder>>(provider => 
                 new Abstractions.DatabaseService<Domain.Entities.EquipmentServiceOrder>(dbProvider, provider));
+
+            // Unit of Work (optional convenience over existing IDatabaseService registrations)
+            services.AddScoped<Abstractions.IUnitOfWork>(provider => new Abstractions.UnitOfWork(dbProvider, provider));
 
             services.Configure<Middleware.ThrottlingOptions>(configuration.GetSection("Throttling"));
 
