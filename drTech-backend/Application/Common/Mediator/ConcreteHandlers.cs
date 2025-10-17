@@ -33,7 +33,6 @@ namespace drTech_backend.Application.Common.Mediator
         public async Task<Domain.Entities.InsuranceAgency> Handle(CreateCommand<Domain.Entities.InsuranceAgency> request, CancellationToken cancellationToken)
         {
             await _db.AddAsync(request.Entity, cancellationToken);
-            await _db.SaveChangesAsync(cancellationToken);
             return request.Entity;
         }
     }
@@ -45,7 +44,6 @@ namespace drTech_backend.Application.Common.Mediator
         public async Task<Unit> Handle(UpdateCommand<Domain.Entities.InsuranceAgency> request, CancellationToken cancellationToken)
         {
             await _db.UpdateAsync(request.Entity, cancellationToken);
-            await _db.SaveChangesAsync(cancellationToken);
             return Unit.Value;
         }
     }
@@ -57,7 +55,6 @@ namespace drTech_backend.Application.Common.Mediator
         public async Task<Unit> Handle(DeleteCommand<Domain.Entities.InsuranceAgency> request, CancellationToken cancellationToken)
         {
             await _db.DeleteAsync(request.Id, cancellationToken);
-            await _db.SaveChangesAsync(cancellationToken);
             return Unit.Value;
         }
     }
@@ -91,7 +88,6 @@ namespace drTech_backend.Application.Common.Mediator
         public async Task<Domain.Entities.Hospital> Handle(CreateCommand<Domain.Entities.Hospital> request, CancellationToken cancellationToken)
         {
             await _db.AddAsync(request.Entity, cancellationToken);
-            await _db.SaveChangesAsync(cancellationToken);
             return request.Entity;
         }
     }
@@ -103,7 +99,7 @@ namespace drTech_backend.Application.Common.Mediator
         public async Task<Unit> Handle(UpdateCommand<Domain.Entities.Hospital> request, CancellationToken cancellationToken)
         {
             await _db.UpdateAsync(request.Entity, cancellationToken);
-            await _db.SaveChangesAsync(cancellationToken);
+            // Save handled by transactional pipeline
             return Unit.Value;
         }
     }
@@ -115,7 +111,7 @@ namespace drTech_backend.Application.Common.Mediator
         public async Task<Unit> Handle(DeleteCommand<Domain.Entities.Hospital> request, CancellationToken cancellationToken)
         {
             await _db.DeleteAsync(request.Id, cancellationToken);
-            await _db.SaveChangesAsync(cancellationToken);
+            // Save handled by transactional pipeline
             return Unit.Value;
         }
     }
@@ -149,7 +145,6 @@ namespace drTech_backend.Application.Common.Mediator
         public async Task<Domain.Entities.Patient> Handle(CreateCommand<Domain.Entities.Patient> request, CancellationToken cancellationToken)
         {
             await _db.AddAsync(request.Entity, cancellationToken);
-            await _db.SaveChangesAsync(cancellationToken);
             return request.Entity;
         }
     }
@@ -161,7 +156,7 @@ namespace drTech_backend.Application.Common.Mediator
         public async Task<Unit> Handle(UpdateCommand<Domain.Entities.Patient> request, CancellationToken cancellationToken)
         {
             await _db.UpdateAsync(request.Entity, cancellationToken);
-            await _db.SaveChangesAsync(cancellationToken);
+            // Save handled by transactional pipeline
             return Unit.Value;
         }
     }
@@ -173,7 +168,6 @@ namespace drTech_backend.Application.Common.Mediator
         public async Task<Unit> Handle(DeleteCommand<Domain.Entities.Patient> request, CancellationToken cancellationToken)
         {
             await _db.DeleteAsync(request.Id, cancellationToken);
-            await _db.SaveChangesAsync(cancellationToken);
             return Unit.Value;
         }
     }
@@ -197,7 +191,6 @@ namespace drTech_backend.Application.Common.Mediator
         public async Task<Domain.Entities.Doctor> Handle(CreateCommand<Domain.Entities.Doctor> request, CancellationToken cancellationToken)
         {
             await _db.AddAsync(request.Entity, cancellationToken);
-            await _db.SaveChangesAsync(cancellationToken);
             return request.Entity;
         }
     }
@@ -231,7 +224,7 @@ namespace drTech_backend.Application.Common.Mediator
         public async Task<Domain.Entities.Department> Handle(CreateCommand<Domain.Entities.Department> request, CancellationToken cancellationToken)
         {
             await _db.AddAsync(request.Entity, cancellationToken);
-            await _db.SaveChangesAsync(cancellationToken);
+            // Save handled by transactional pipeline
             return request.Entity;
         }
     }
@@ -265,7 +258,7 @@ namespace drTech_backend.Application.Common.Mediator
         public async Task<Domain.Entities.Payment> Handle(CreateCommand<Domain.Entities.Payment> request, CancellationToken cancellationToken)
         {
             await _db.AddAsync(request.Entity, cancellationToken);
-            await _db.SaveChangesAsync(cancellationToken);
+            // Save handled by transactional pipeline
             return request.Entity;
         }
     }
@@ -299,7 +292,7 @@ namespace drTech_backend.Application.Common.Mediator
         public async Task<Unit> Handle(DeleteCommand<Domain.Entities.ErrorLog> request, CancellationToken cancellationToken)
         {
             await _db.DeleteAsync(request.Id, cancellationToken);
-            await _db.SaveChangesAsync(cancellationToken);
+            // Save handled by transactional pipeline
             return Unit.Value;
         }
     }
@@ -323,7 +316,6 @@ namespace drTech_backend.Application.Common.Mediator
         public async Task<Domain.Entities.Reservation> Handle(CreateCommand<Domain.Entities.Reservation> request, CancellationToken cancellationToken)
         {
             await _db.AddAsync(request.Entity, cancellationToken);
-            await _db.SaveChangesAsync(cancellationToken);
             return request.Entity;
         }
     }
@@ -347,7 +339,7 @@ namespace drTech_backend.Application.Common.Mediator
         public async Task<Domain.Entities.AgencyContract> Handle(CreateCommand<Domain.Entities.AgencyContract> request, CancellationToken cancellationToken)
         {
             await _db.AddAsync(request.Entity, cancellationToken);
-            await _db.SaveChangesAsync(cancellationToken);
+            // Save handled by transactional pipeline
             return request.Entity;
         }
     }
@@ -371,7 +363,7 @@ namespace drTech_backend.Application.Common.Mediator
         public async Task<Domain.Entities.MedicalService> Handle(CreateCommand<Domain.Entities.MedicalService> request, CancellationToken cancellationToken)
         {
             await _db.AddAsync(request.Entity, cancellationToken);
-            await _db.SaveChangesAsync(cancellationToken);
+            // Save handled by transactional pipeline
             return request.Entity;
         }
     }
@@ -395,7 +387,7 @@ namespace drTech_backend.Application.Common.Mediator
         public async Task<Domain.Entities.PriceListItem> Handle(CreateCommand<Domain.Entities.PriceListItem> request, CancellationToken cancellationToken)
         {
             await _db.AddAsync(request.Entity, cancellationToken);
-            await _db.SaveChangesAsync(cancellationToken);
+            // Save handled by transactional pipeline
             return request.Entity;
         }
     }
@@ -429,7 +421,7 @@ namespace drTech_backend.Application.Common.Mediator
         public async Task<Domain.Entities.Equipment> Handle(CreateCommand<Domain.Entities.Equipment> request, CancellationToken cancellationToken)
         {
             await _db.AddAsync(request.Entity, cancellationToken);
-            await _db.SaveChangesAsync(cancellationToken);
+            // Save handled by transactional pipeline
             return request.Entity;
         }
     }
@@ -441,7 +433,7 @@ namespace drTech_backend.Application.Common.Mediator
         public async Task<Unit> Handle(UpdateCommand<Domain.Entities.Equipment> request, CancellationToken cancellationToken)
         {
             await _db.UpdateAsync(request.Entity, cancellationToken);
-            await _db.SaveChangesAsync(cancellationToken);
+            // Save handled by transactional pipeline
             return Unit.Value;
         }
     }
@@ -453,7 +445,7 @@ namespace drTech_backend.Application.Common.Mediator
         public async Task<Unit> Handle(DeleteCommand<Domain.Entities.Equipment> request, CancellationToken cancellationToken)
         {
             await _db.DeleteAsync(request.Id, cancellationToken);
-            await _db.SaveChangesAsync(cancellationToken);
+            // Save handled by transactional pipeline
             return Unit.Value;
         }
     }
@@ -487,7 +479,7 @@ namespace drTech_backend.Application.Common.Mediator
         public async Task<Domain.Entities.Appointment> Handle(CreateCommand<Domain.Entities.Appointment> request, CancellationToken cancellationToken)
         {
             await _db.AddAsync(request.Entity, cancellationToken);
-            await _db.SaveChangesAsync(cancellationToken);
+            // Save handled by transactional pipeline
             return request.Entity;
         }
     }
@@ -499,7 +491,7 @@ namespace drTech_backend.Application.Common.Mediator
         public async Task<Unit> Handle(UpdateCommand<Domain.Entities.Appointment> request, CancellationToken cancellationToken)
         {
             await _db.UpdateAsync(request.Entity, cancellationToken);
-            await _db.SaveChangesAsync(cancellationToken);
+            // Save handled by transactional pipeline
             return Unit.Value;
         }
     }
@@ -511,7 +503,7 @@ namespace drTech_backend.Application.Common.Mediator
         public async Task<Unit> Handle(DeleteCommand<Domain.Entities.Appointment> request, CancellationToken cancellationToken)
         {
             await _db.DeleteAsync(request.Id, cancellationToken);
-            await _db.SaveChangesAsync(cancellationToken);
+            // Save handled by transactional pipeline
             return Unit.Value;
         }
     }
@@ -545,7 +537,7 @@ namespace drTech_backend.Application.Common.Mediator
         public async Task<Domain.Entities.User> Handle(CreateCommand<Domain.Entities.User> request, CancellationToken cancellationToken)
         {
             await _db.AddAsync(request.Entity, cancellationToken);
-            await _db.SaveChangesAsync(cancellationToken);
+            // Save handled by transactional pipeline
             return request.Entity;
         }
     }
@@ -557,7 +549,7 @@ namespace drTech_backend.Application.Common.Mediator
         public async Task<Unit> Handle(UpdateCommand<Domain.Entities.User> request, CancellationToken cancellationToken)
         {
             await _db.UpdateAsync(request.Entity, cancellationToken);
-            await _db.SaveChangesAsync(cancellationToken);
+            // Save handled by transactional pipeline
             return Unit.Value;
         }
     }
@@ -569,7 +561,7 @@ namespace drTech_backend.Application.Common.Mediator
         public async Task<Unit> Handle(DeleteCommand<Domain.Entities.User> request, CancellationToken cancellationToken)
         {
             await _db.DeleteAsync(request.Id, cancellationToken);
-            await _db.SaveChangesAsync(cancellationToken);
+            // Save handled by transactional pipeline
             return Unit.Value;
         }
     }
@@ -603,7 +595,7 @@ namespace drTech_backend.Application.Common.Mediator
         public async Task<Domain.Entities.Discount> Handle(CreateCommand<Domain.Entities.Discount> request, CancellationToken cancellationToken)
         {
             await _db.AddAsync(request.Entity, cancellationToken);
-            await _db.SaveChangesAsync(cancellationToken);
+            // Save handled by transactional pipeline
             return request.Entity;
         }
     }
@@ -615,7 +607,7 @@ namespace drTech_backend.Application.Common.Mediator
         public async Task<Unit> Handle(UpdateCommand<Domain.Entities.Discount> request, CancellationToken cancellationToken)
         {
             await _db.UpdateAsync(request.Entity, cancellationToken);
-            await _db.SaveChangesAsync(cancellationToken);
+            // Save handled by transactional pipeline
             return Unit.Value;
         }
     }
@@ -627,7 +619,7 @@ namespace drTech_backend.Application.Common.Mediator
         public async Task<Unit> Handle(DeleteCommand<Domain.Entities.Discount> request, CancellationToken cancellationToken)
         {
             await _db.DeleteAsync(request.Id, cancellationToken);
-            await _db.SaveChangesAsync(cancellationToken);
+            // Save handled by transactional pipeline
             return Unit.Value;
         }
     }
@@ -661,7 +653,7 @@ namespace drTech_backend.Application.Common.Mediator
         public async Task<Domain.Entities.DiscountRequest> Handle(CreateCommand<Domain.Entities.DiscountRequest> request, CancellationToken cancellationToken)
         {
             await _db.AddAsync(request.Entity, cancellationToken);
-            await _db.SaveChangesAsync(cancellationToken);
+            // Save handled by transactional pipeline
             return request.Entity;
         }
     }
@@ -673,7 +665,7 @@ namespace drTech_backend.Application.Common.Mediator
         public async Task<Unit> Handle(UpdateCommand<Domain.Entities.DiscountRequest> request, CancellationToken cancellationToken)
         {
             await _db.UpdateAsync(request.Entity, cancellationToken);
-            await _db.SaveChangesAsync(cancellationToken);
+            // Save handled by transactional pipeline
             return Unit.Value;
         }
     }
@@ -685,7 +677,7 @@ namespace drTech_backend.Application.Common.Mediator
         public async Task<Unit> Handle(DeleteCommand<Domain.Entities.DiscountRequest> request, CancellationToken cancellationToken)
         {
             await _db.DeleteAsync(request.Id, cancellationToken);
-            await _db.SaveChangesAsync(cancellationToken);
+            // Save handled by transactional pipeline
             return Unit.Value;
         }
     }
@@ -719,7 +711,7 @@ namespace drTech_backend.Application.Common.Mediator
         public async Task<Domain.Entities.EquipmentStatusLog> Handle(CreateCommand<Domain.Entities.EquipmentStatusLog> request, CancellationToken cancellationToken)
         {
             await _db.AddAsync(request.Entity, cancellationToken);
-            await _db.SaveChangesAsync(cancellationToken);
+            // Save handled by transactional pipeline
             return request.Entity;
         }
     }
@@ -731,7 +723,7 @@ namespace drTech_backend.Application.Common.Mediator
         public async Task<Unit> Handle(UpdateCommand<Domain.Entities.EquipmentStatusLog> request, CancellationToken cancellationToken)
         {
             await _db.UpdateAsync(request.Entity, cancellationToken);
-            await _db.SaveChangesAsync(cancellationToken);
+            // Save handled by transactional pipeline
             return Unit.Value;
         }
     }
@@ -743,7 +735,7 @@ namespace drTech_backend.Application.Common.Mediator
         public async Task<Unit> Handle(DeleteCommand<Domain.Entities.EquipmentStatusLog> request, CancellationToken cancellationToken)
         {
             await _db.DeleteAsync(request.Id, cancellationToken);
-            await _db.SaveChangesAsync(cancellationToken);
+            // Save handled by transactional pipeline
             return Unit.Value;
         }
     }
@@ -777,7 +769,6 @@ namespace drTech_backend.Application.Common.Mediator
         public async Task<Domain.Entities.EquipmentServiceOrder> Handle(CreateCommand<Domain.Entities.EquipmentServiceOrder> request, CancellationToken cancellationToken)
         {
             await _db.AddAsync(request.Entity, cancellationToken);
-            await _db.SaveChangesAsync(cancellationToken);
             return request.Entity;
         }
     }
@@ -789,7 +780,6 @@ namespace drTech_backend.Application.Common.Mediator
         public async Task<Unit> Handle(UpdateCommand<Domain.Entities.EquipmentServiceOrder> request, CancellationToken cancellationToken)
         {
             await _db.UpdateAsync(request.Entity, cancellationToken);
-            await _db.SaveChangesAsync(cancellationToken);
             return Unit.Value;
         }
     }
@@ -801,7 +791,6 @@ namespace drTech_backend.Application.Common.Mediator
         public async Task<Unit> Handle(DeleteCommand<Domain.Entities.EquipmentServiceOrder> request, CancellationToken cancellationToken)
         {
             await _db.DeleteAsync(request.Id, cancellationToken);
-            await _db.SaveChangesAsync(cancellationToken);
             return Unit.Value;
         }
     }

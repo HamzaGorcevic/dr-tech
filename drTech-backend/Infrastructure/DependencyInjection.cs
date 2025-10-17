@@ -28,8 +28,8 @@ namespace drTech_backend.Infrastructure
             });
 
             services.AddMediatR(AppDomain.CurrentDomain.GetAssemblies());
-            services.AddValidatorsFromAssemblyContaining<Application.Common.Mediator.CreateDoctorValidator>();
             services.AddTransient(typeof(IPipelineBehavior<,>), typeof(ValidationBehavior<,>));
+            services.AddTransient(typeof(IPipelineBehavior<,>), typeof(Application.Common.Behaviors.UnitOfWorkBehavior<,>));
             services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
 
             // Register concrete MediatR handlers
@@ -187,6 +187,8 @@ namespace drTech_backend.Infrastructure
 
             // Unit of Work (optional convenience over existing IDatabaseService registrations)
             services.AddScoped<Abstractions.IUnitOfWork>(provider => new Abstractions.UnitOfWork(dbProvider, provider));
+            // Register the underlying provider-aware generic unit of work used by the transactional pipeline
+            services.AddScoped<Abstractions.IGenericUnitOfWork>(provider => Abstractions.DatabaseFactory.CreateUnitOfWork(dbProvider, provider));
 
             services.Configure<Middleware.ThrottlingOptions>(configuration.GetSection("Throttling"));
 

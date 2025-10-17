@@ -130,7 +130,6 @@ namespace drTech_backend.Infrastructure.Neo4j
 
         private static object ConvertValue(object value)
         {
-            // Handle nullable types first using type checking
             if (value != null && value.GetType() == typeof(Guid?))
             {
                 var nullableGuid = (Guid?)value;
@@ -172,7 +171,6 @@ namespace drTech_backend.Infrastructure.Neo4j
         }
     }
 
-    // Neo4j models mirroring PostgreSQL entities
     public class Neo4jHospital
     {
         public string Id { get; set; } = string.Empty;

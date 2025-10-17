@@ -7,10 +7,10 @@ using drTech_backend.Infrastructure.Auth;
 namespace drTech_backend.Application.Common.Mediator
 {
     // Auth Commands
-    public record RegisterCommand(string Email, string Password, string Role = "InsuredUser", string FullName = "") : IRequest<Unit>;
-    public record LoginCommand(string Email, string Password) : IRequest<LoginResponse>;
+    public record RegisterCommand(string Email, string Password, string Role = "InsuredUser", string FullName = "") : IRequest<Unit>, ITransactionalRequest;
+    public record LoginCommand(string Email, string Password) : IRequest<LoginResponse>, ITransactionalRequest;
     public record RefreshTokenCommand(string RefreshToken) : IRequest<RefreshResponse>;
-    public record GoogleLoginCommand(string Email, string IdToken) : IRequest<LoginResponse>;
+    public record GoogleLoginCommand(string Email, string IdToken) : IRequest<LoginResponse>, ITransactionalRequest;
     public record GetUserProfileQuery(Guid UserId) : IRequest<UserProfileResponse>;
 
     // Auth Responses
@@ -50,7 +50,7 @@ namespace drTech_backend.Application.Common.Mediator
             };
 
             await _users.AddAsync(user, cancellationToken);
-            await _users.SaveChangesAsync(cancellationToken);
+            // Save handled by transactional pipeline
             return Unit.Value;
         }
     }
@@ -82,7 +82,7 @@ namespace drTech_backend.Application.Common.Mediator
             refreshToken.UserId = user.Id;
 
             await _refreshTokens.AddAsync(refreshToken, cancellationToken);
-            await _refreshTokens.SaveChangesAsync(cancellationToken);
+            // Save handled by transactional pipeline
 
             return new LoginResponse(accessToken, refreshToken.Token);
         }
@@ -119,15 +119,18 @@ namespace drTech_backend.Application.Common.Mediator
         private readonly IDatabaseService<Domain.Entities.User> _users;
         private readonly IDatabaseService<Domain.Entities.RefreshToken> _refreshTokens;
         private readonly IJwtTokenService _jwt;
+        private readonly IUnitOfWork _unitOfWork;
 
         public GoogleLoginCommandHandler(
             IDatabaseService<Domain.Entities.User> users,
             IDatabaseService<Domain.Entities.RefreshToken> refreshTokens,
-            IJwtTokenService jwt)
+            IJwtTokenService jwt,
+            IUnitOfWork unitOfWork)
         {
             _users = users;
             _refreshTokens = refreshTokens;
             _jwt = jwt;
+            _unitOfWork = unitOfWork;
         }
 
         public async Task<LoginResponse> Handle(GoogleLoginCommand request, CancellationToken cancellationToken)
@@ -149,7 +152,7 @@ namespace drTech_backend.Application.Common.Mediator
                     CreatedAtUtc = DateTime.UtcNow
                 };
                 await _users.AddAsync(user, cancellationToken);
-                await _users.SaveChangesAsync(cancellationToken);
+                // Save handled by transactional pipeline
             }
 
             var accessToken = _jwt.GenerateAccessToken(user);
@@ -157,7 +160,7 @@ namespace drTech_backend.Application.Common.Mediator
             refreshToken.UserId = user.Id;
 
             await _refreshTokens.AddAsync(refreshToken, cancellationToken);
-            await _refreshTokens.SaveChangesAsync(cancellationToken);
+            // Save handled by transactional pipeline
 
             return new LoginResponse(accessToken, refreshToken.Token);
         }

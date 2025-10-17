@@ -31,6 +31,9 @@ namespace drTech_backend.Infrastructure.Abstractions
 
 		IGenericRepository<T> GetRepository<T>() where T : class;
 		Task<int> SaveChangesAsync(CancellationToken ct = default);
+		Task BeginTransactionAsync(CancellationToken ct = default);
+		Task CommitTransactionAsync(CancellationToken ct = default);
+		Task RollbackTransactionAsync(CancellationToken ct = default);
 	}
 
 	// Provider-aware Unit of Work that composes existing generic repositories without altering current behavior
@@ -120,6 +123,21 @@ namespace drTech_backend.Infrastructure.Abstractions
 		public async Task<int> SaveChangesAsync(CancellationToken ct = default)
 		{
 			return await _uow.SaveChangesAsync(ct);
+		}
+
+		public async Task BeginTransactionAsync(CancellationToken ct = default)
+		{
+			await _uow.BeginTransactionAsync(ct);
+		}
+
+		public async Task CommitTransactionAsync(CancellationToken ct = default)
+		{
+			await _uow.CommitTransactionAsync(ct);
+		}
+
+		public async Task RollbackTransactionAsync(CancellationToken ct = default)
+		{
+			await _uow.RollbackTransactionAsync(ct);
 		}
 	}
 }

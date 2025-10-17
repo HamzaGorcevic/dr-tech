@@ -66,18 +66,15 @@ namespace drTech_backend.Infrastructure.Abstractions
         Task DeleteAsync(Guid id, CancellationToken ct = default);
         Task<List<T>> GetAllAsync(CancellationToken ct = default);
         Task<List<T>> FindAsync(Func<T, bool> predicate, CancellationToken ct = default);
-        Task<int> SaveChangesAsync(CancellationToken ct = default);
     }
 
     public class DatabaseService<T> : IDatabaseService<T> where T : class
     {
         private readonly IGenericRepository<T> _repository;
-        private readonly IGenericUnitOfWork _unitOfWork;
 
         public DatabaseService(DatabaseProvider provider, IServiceProvider serviceProvider)
         {
             _repository = DatabaseFactory.CreateRepository<T>(provider, serviceProvider);
-            _unitOfWork = DatabaseFactory.CreateUnitOfWork(provider, serviceProvider);
         }
 
         public async Task<T?> GetByIdAsync(Guid id, CancellationToken ct = default) => 
@@ -97,8 +94,5 @@ namespace drTech_backend.Infrastructure.Abstractions
 
         public async Task<List<T>> FindAsync(Func<T, bool> predicate, CancellationToken ct = default) => 
             await _repository.FindAsync(predicate, ct);
-
-        public async Task<int> SaveChangesAsync(CancellationToken ct = default) => 
-            await _unitOfWork.SaveChangesAsync(ct);
     }
 }

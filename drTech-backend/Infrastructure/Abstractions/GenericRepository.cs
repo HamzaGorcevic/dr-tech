@@ -23,9 +23,11 @@ namespace drTech_backend.Infrastructure.Abstractions
     public interface IGenericUnitOfWork
     {
         Task<int> SaveChangesAsync(CancellationToken ct = default);
+        Task BeginTransactionAsync(CancellationToken ct = default);
+        Task CommitTransactionAsync(CancellationToken ct = default);
+        Task RollbackTransactionAsync(CancellationToken ct = default);
     }
 
-    // Generic repository implementations for each database
     public class PostgreSqlRepository<T> : IGenericRepository<T> where T : class
     {
         private readonly Infrastructure.AppDbContext _db;
@@ -127,6 +129,7 @@ namespace drTech_backend.Infrastructure.Abstractions
     public class PostgreSqlUnitOfWork : IGenericUnitOfWork
     {
         private readonly Infrastructure.AppDbContext _db;
+        private Microsoft.EntityFrameworkCore.Storage.IDbContextTransaction? _currentTransaction;
 
         public PostgreSqlUnitOfWork(Infrastructure.AppDbContext db)
         {
@@ -135,17 +138,47 @@ namespace drTech_backend.Infrastructure.Abstractions
 
         public async Task<int> SaveChangesAsync(CancellationToken ct = default) => 
             await _db.SaveChangesAsync(ct);
+
+        public async Task BeginTransactionAsync(CancellationToken ct = default)
+        {
+            if (_currentTransaction != null) return;
+            _currentTransaction = await _db.Database.BeginTransactionAsync(ct);
+        }
+
+        public async Task CommitTransactionAsync(CancellationToken ct = default)
+        {
+            if (_currentTransaction == null) return;
+            await _db.Database.CommitTransactionAsync(ct);
+            await _currentTransaction.DisposeAsync();
+            _currentTransaction = null;
+        }
+
+        public async Task RollbackTransactionAsync(CancellationToken ct = default)
+        {
+            if (_currentTransaction == null) return;
+            await _db.Database.RollbackTransactionAsync(ct);
+            await _currentTransaction.DisposeAsync();
+            _currentTransaction = null;
+        }
     }
 
     public class MongoDbUnitOfWork : IGenericUnitOfWork
     {
         public async Task<int> SaveChangesAsync(CancellationToken ct = default) => 
-            await Task.FromResult(1); // MongoDB operations are immediate
+            await Task.FromResult(1); 
+
+        public async Task BeginTransactionAsync(CancellationToken ct = default) => await Task.CompletedTask; 
+        public async Task CommitTransactionAsync(CancellationToken ct = default) => await Task.CompletedTask; 
+        public async Task RollbackTransactionAsync(CancellationToken ct = default) => await Task.CompletedTask; 
     }
 
     public class Neo4jUnitOfWork : IGenericUnitOfWork
     {
         public async Task<int> SaveChangesAsync(CancellationToken ct = default) => 
-            await Task.FromResult(1); // Neo4j operations are immediate
+            await Task.FromResult(1); 
+
+        public async Task BeginTransactionAsync(CancellationToken ct = default) => await Task.CompletedTask; 
+        public async Task CommitTransactionAsync(CancellationToken ct = default) => await Task.CompletedTask; 
+        public async Task RollbackTransactionAsync(CancellationToken ct = default) => await Task.CompletedTask; 
     }
 }

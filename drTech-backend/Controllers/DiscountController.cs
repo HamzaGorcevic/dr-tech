@@ -74,7 +74,7 @@ namespace drTech_backend.Controllers
         }
 
         [HttpPost("request")]
-        [Authorize(Roles = "InsuranceAgency")]
+        [Authorize(Roles = "InsuranceAgency, InsuredUser")]
 		public async Task<IActionResult> RequestDiscount([FromBody] CreateDiscountRequestDto request, CancellationToken cancellationToken)
         {
             var discountRequest = new Domain.Entities.DiscountRequest
