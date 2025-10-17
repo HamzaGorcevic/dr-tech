@@ -4,7 +4,6 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 using drTech_backend.Infrastructure.Auth;
 using FluentValidation;
-using MediatR;
 using drTech_backend.Application.Common.Mediator;
 
 namespace drTech_backend.Infrastructure
@@ -73,6 +72,12 @@ namespace drTech_backend.Infrastructure
 
             services.AddScoped<Application.Common.Mediator.GetAllPriceListItemsQueryHandler>();
             services.AddScoped<Application.Common.Mediator.CreatePriceListItemCommandHandler>();
+
+            // PreContract handlers
+            services.AddScoped<Application.Common.Mediator.GetAllPreContractsQueryHandler>();
+            services.AddScoped<Application.Common.Mediator.GetByIdPreContractQueryHandler>();
+            services.AddScoped<Application.Common.Mediator.CreatePreContractCommandHandler>();
+            services.AddScoped<Application.Common.Mediator.UpdatePreContractCommandHandler>();
 
             // Logs handlers
             services.AddScoped<Application.Common.Mediator.GetByIdAuditLogQueryHandler>();
@@ -164,6 +169,8 @@ namespace drTech_backend.Infrastructure
                 new Abstractions.DatabaseService<Domain.Entities.PriceListItem>(dbProvider, provider));
             services.AddScoped<Abstractions.IDatabaseService<Domain.Entities.Payment>>(provider => 
                 new Abstractions.DatabaseService<Domain.Entities.Payment>(dbProvider, provider));
+            services.AddScoped<Abstractions.IDatabaseService<Domain.Entities.PreContract>>(provider => 
+                new Abstractions.DatabaseService<Domain.Entities.PreContract>(dbProvider, provider));
             services.AddScoped<Abstractions.IDatabaseService<Domain.Entities.User>>(provider => 
                 new Abstractions.DatabaseService<Domain.Entities.User>(dbProvider, provider));
             services.AddScoped<Abstractions.IDatabaseService<Domain.Entities.RefreshToken>>(provider => 

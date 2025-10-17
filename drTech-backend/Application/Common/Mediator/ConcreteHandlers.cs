@@ -392,6 +392,50 @@ namespace drTech_backend.Application.Common.Mediator
         }
     }
 
+    // Concrete handlers for PreContract
+    public class GetAllPreContractsQueryHandler : IRequestHandler<GetAllQuery<Domain.Entities.PreContract>, IReadOnlyList<Domain.Entities.PreContract>>
+    {
+        private readonly IDatabaseService<Domain.Entities.PreContract> _db;
+        public GetAllPreContractsQueryHandler(IDatabaseService<Domain.Entities.PreContract> db) { _db = db; }
+        public async Task<IReadOnlyList<Domain.Entities.PreContract>> Handle(GetAllQuery<Domain.Entities.PreContract> request, CancellationToken cancellationToken)
+        {
+            var items = await _db.GetAllAsync(cancellationToken);
+            return items;
+        }
+    }
+
+    public class GetByIdPreContractQueryHandler : IRequestHandler<GetByIdQuery<Domain.Entities.PreContract>, Domain.Entities.PreContract?>
+    {
+        private readonly IDatabaseService<Domain.Entities.PreContract> _db;
+        public GetByIdPreContractQueryHandler(IDatabaseService<Domain.Entities.PreContract> db) { _db = db; }
+        public async Task<Domain.Entities.PreContract?> Handle(GetByIdQuery<Domain.Entities.PreContract> request, CancellationToken cancellationToken)
+        {
+            return await _db.GetByIdAsync(request.Id, cancellationToken);
+        }
+    }
+
+    public class CreatePreContractCommandHandler : IRequestHandler<CreateCommand<Domain.Entities.PreContract>, Domain.Entities.PreContract>
+    {
+        private readonly IDatabaseService<Domain.Entities.PreContract> _db;
+        public CreatePreContractCommandHandler(IDatabaseService<Domain.Entities.PreContract> db) { _db = db; }
+        public async Task<Domain.Entities.PreContract> Handle(CreateCommand<Domain.Entities.PreContract> request, CancellationToken cancellationToken)
+        {
+            await _db.AddAsync(request.Entity, cancellationToken);
+            return request.Entity;
+        }
+    }
+
+    public class UpdatePreContractCommandHandler : IRequestHandler<UpdateCommand<Domain.Entities.PreContract>, Unit>
+    {
+        private readonly IDatabaseService<Domain.Entities.PreContract> _db;
+        public UpdatePreContractCommandHandler(IDatabaseService<Domain.Entities.PreContract> db) { _db = db; }
+        public async Task<Unit> Handle(UpdateCommand<Domain.Entities.PreContract> request, CancellationToken cancellationToken)
+        {
+            await _db.UpdateAsync(request.Entity, cancellationToken);
+            return Unit.Value;
+        }
+    }
+
     // Concrete handlers for Equipment
     public class GetAllEquipmentQueryHandler : IRequestHandler<GetAllQuery<Domain.Entities.Equipment>, IReadOnlyList<Domain.Entities.Equipment>>
     {

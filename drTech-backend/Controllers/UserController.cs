@@ -132,6 +132,9 @@ namespace drTech_backend.Controllers
         {
             var services = await _serviceDb.GetAllAsync(cancellationToken);
             var priceList = await _priceListDb.GetAllAsync(cancellationToken);
+            var doctors = await _mediator.Send(new GetAllQuery<Domain.Entities.Doctor>(), cancellationToken);
+            var departments = await _mediator.Send(new GetAllQuery<Domain.Entities.Department>(), cancellationToken);
+            var hospitals = await _hospitalDb.GetAllAsync(cancellationToken);
 
             // Apply filters
             if (!string.IsNullOrEmpty(filter.ServiceType))
@@ -146,7 +149,6 @@ namespace drTech_backend.Controllers
 
             if (!string.IsNullOrEmpty(filter.City))
             {
-                var hospitals = await _hospitalDb.GetAllAsync(cancellationToken);
                 var cityHospitals = hospitals.Where(h => h.City.Contains(filter.City, StringComparison.OrdinalIgnoreCase));
                 var cityHospitalIds = cityHospitals.Select(h => h.Id);
                 var cityPrices = priceList.Where(p => cityHospitalIds.Contains(p.HospitalId));
@@ -154,10 +156,38 @@ namespace drTech_backend.Controllers
                 services = services.Where(s => cityServiceIds.Contains(s.Id)).ToList();
             }
 
-            // Add pricing information
+            // Specialist filtering - filter by doctor specialty
+            if (!string.IsNullOrEmpty(filter.Specialist))
+            {
+                var specialistDoctors = doctors.Where(d => d.Specialty.Contains(filter.Specialist, StringComparison.OrdinalIgnoreCase));
+                var specialistDepartmentIds = specialistDoctors.Select(d => d.DepartmentId);
+                services = services.Where(s => specialistDepartmentIds.Contains(s.DepartmentId)).ToList();
+            }
+
+            // Date filtering - filter by available appointments
+            if (filter.Date.HasValue)
+            {
+                var appointments = await _mediator.Send(new GetAllQuery<Domain.Entities.Appointment>(), cancellationToken);
+                var availableServices = appointments
+                    .Where(a => a.StartsAtUtc.Date == filter.Date.Value.Date && a.Status != "Cancelled")
+                    .Select(a => a.MedicalServiceId)
+                    .Where(id => id.HasValue)
+                    .Select(id => id!.Value)
+                    .Distinct();
+                services = services.Where(s => availableServices.Contains(s.Id)).ToList();
+            }
+
+            // Add pricing information and apply price filters
             var result = services.Select(service =>
             {
                 var prices = priceList.Where(p => p.MedicalServiceId == service.Id && p.IsActive);
+                
+                // Apply price range filtering
+                if (filter.MinPrice.HasValue)
+                    prices = prices.Where(p => p.Price >= filter.MinPrice.Value);
+                if (filter.MaxPrice.HasValue)
+                    prices = prices.Where(p => p.Price <= filter.MaxPrice.Value);
+
                 return new ServiceWithPricingDto
                 {
                     Id = service.Id,
@@ -173,7 +203,7 @@ namespace drTech_backend.Controllers
                         ValidUntil = p.ValidUntil
                     }).ToList()
                 };
-            });
+            }).Where(s => s.Prices.Any()); // Only return services with valid prices
 
             return Ok(result.ToList());
         }
@@ -292,6 +322,114 @@ namespace drTech_backend.Controllers
             await _mediator.Send(new CreateCommand<Domain.Entities.DiscountRequest>(discountRequest), cancellationToken);
             return CreatedAtAction(nameof(GetDiscounts), new { }, discountRequest);
         }
+
+        [HttpPost("create-pre-contract")]
+        [Authorize(Roles = "InsuredUser")]
+        public async Task<IActionResult> CreatePreContract([FromBody] CreatePreContractDto request, CancellationToken cancellationToken)
+        {
+            var userId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value
+                ?? User.FindFirst(System.IdentityModel.Tokens.Jwt.JwtRegisteredClaimNames.Sub)?.Value;
+            if (string.IsNullOrEmpty(userId) || !Guid.TryParse(userId, out var userGuid))
+                return Unauthorized();
+
+            var user = await _mediator.Send(new GetByIdQuery<Domain.Entities.User>(userGuid), cancellationToken);
+            if (user is null || !user.PatientId.HasValue) 
+                return BadRequest("User not associated with patient");
+
+            // Validate hospital exists
+            var hospital = await _mediator.Send(new GetByIdQuery<Domain.Entities.Hospital>(request.HospitalId), cancellationToken);
+            if (hospital is null) return BadRequest("Hospital not found");
+
+            // Validate agency exists
+            var agency = await _mediator.Send(new GetByIdQuery<Domain.Entities.InsuranceAgency>(request.InsuranceAgencyId), cancellationToken);
+            if (agency is null) return BadRequest("Insurance agency not found");
+
+            // Check if user has active pre-contract
+            var existingContracts = await _mediator.Send(new GetAllQuery<Domain.Entities.PreContract>(), cancellationToken);
+            var activeContract = existingContracts.FirstOrDefault(pc => 
+                pc.PatientId == user.PatientId.Value && 
+                pc.Status == "Active");
+            
+            if (activeContract != null)
+                return Conflict("Patient already has an active pre-contract");
+
+            // Generate payment plan
+            var paymentPlan = GeneratePaymentPlan(request.AgreedPrice, request.PaymentPlanType);
+            
+            var preContract = new Domain.Entities.PreContract
+            {
+                Id = Guid.NewGuid(),
+                HospitalId = request.HospitalId,
+                InsuranceAgencyId = request.InsuranceAgencyId,
+                PatientId = user.PatientId.Value,
+                AgreedPrice = request.AgreedPrice,
+                PaymentPlan = paymentPlan,
+                CreatedAtUtc = DateTime.UtcNow,
+                Status = "Active"
+            };
+
+            await _mediator.Send(new CreateCommand<Domain.Entities.PreContract>(preContract), cancellationToken);
+
+            // Create payment installments
+            await CreatePaymentInstallments(preContract, cancellationToken);
+
+            return CreatedAtAction(nameof(GetPreContracts), new { }, preContract);
+        }
+
+        [HttpGet("pre-contracts")]
+        [Authorize(Roles = "InsuredUser")]
+        public async Task<IActionResult> GetPreContracts(CancellationToken cancellationToken)
+        {
+            var userId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value
+                ?? User.FindFirst(System.IdentityModel.Tokens.Jwt.JwtRegisteredClaimNames.Sub)?.Value;
+            if (string.IsNullOrEmpty(userId) || !Guid.TryParse(userId, out var userGuid))
+                return Unauthorized();
+
+            var user = await _mediator.Send(new GetByIdQuery<Domain.Entities.User>(userGuid), cancellationToken);
+            if (user is null || !user.PatientId.HasValue) return BadRequest("User not associated with patient");
+
+            var preContracts = await _mediator.Send(new GetAllQuery<Domain.Entities.PreContract>(), cancellationToken);
+            var userContracts = preContracts
+                .Where(pc => pc.PatientId == user.PatientId.Value)
+                .OrderByDescending(pc => pc.CreatedAtUtc);
+
+            return Ok(userContracts);
+        }
+
+        private string GeneratePaymentPlan(decimal totalAmount, string planType)
+        {
+            return planType.ToLower() switch
+            {
+                "single" => $"1x{totalAmount:F2}",
+                "monthly" => $"3x{totalAmount / 3:F2}",
+                "quarterly" => $"4x{totalAmount / 4:F2}",
+                _ => $"2x{totalAmount / 2:F2}"
+            };
+        }
+
+        private async Task CreatePaymentInstallments(Domain.Entities.PreContract preContract, CancellationToken cancellationToken)
+        {
+            var planParts = preContract.PaymentPlan.Split('x');
+            if (planParts.Length != 2) return;
+
+            var installmentCount = int.Parse(planParts[0]);
+            var installmentAmount = decimal.Parse(planParts[1]);
+
+            for (int i = 0; i < installmentCount; i++)
+            {
+                var payment = new Domain.Entities.Payment
+                {
+                    Id = Guid.NewGuid(),
+                    PreContractId = preContract.Id,
+                    Amount = installmentAmount,
+                    DueDateUtc = DateTime.UtcNow.AddDays(30 * (i + 1)), // 30 days between installments
+                    Confirmed = false,
+                    LateCount = 0
+                };
+
+                await _mediator.Send(new CreateCommand<Domain.Entities.Payment>(payment), cancellationToken);
+            }
+        }
     }
 
     public class UserProfileDto
@@ -358,5 +496,13 @@ namespace drTech_backend.Controllers
         public decimal RequestedDiscountPercent { get; set; }
         public string Reason { get; set; } = string.Empty;
         public string Explanation { get; set; } = string.Empty;
+    }
+
+    public class CreatePreContractDto
+    {
+        public Guid HospitalId { get; set; }
+        public Guid InsuranceAgencyId { get; set; }
+        public decimal AgreedPrice { get; set; }
+        public string PaymentPlanType { get; set; } = "monthly"; // single/monthly/quarterly
     }
 }
