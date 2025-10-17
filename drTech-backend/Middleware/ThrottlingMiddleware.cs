@@ -10,9 +10,9 @@ namespace drTech_backend.Middleware
         private readonly ConcurrentDictionary<string, ThrottleInfo> _throttleCache = new();
 
         // Configuration
-        private readonly int _maxRequestsPerWindow = 100;
-        private readonly int _windowSizeMinutes = 10;
-        private readonly int _blockDurationMinutes = 5;
+		private readonly int _maxRequestsPerWindow = 1000; 
+		private readonly int _windowSizeMinutes = 1; 
+		private readonly int _blockDurationMinutes = 1;
 
         public ThrottlingMiddleware(
             RequestDelegate next,
@@ -22,8 +22,17 @@ namespace drTech_backend.Middleware
             _logger = logger;
         }
 
-        public async Task InvokeAsync(HttpContext context)
+		public async Task InvokeAsync(HttpContext context)
         {
+			// Bypass throttling for login endpoint to be less restrictive during auth
+			var requestPath = context.Request.Path.Value ?? string.Empty;
+			if (string.Equals(context.Request.Method, "POST", StringComparison.OrdinalIgnoreCase)
+				&& requestPath.StartsWith("/api/Auth/login", StringComparison.OrdinalIgnoreCase))
+			{
+				await _next(context);
+				return;
+			}
+
             var clientId = GetClientId(context);
             var now = DateTime.UtcNow;
 
