@@ -66,15 +66,18 @@ namespace drTech_backend.Infrastructure.Abstractions
         Task DeleteAsync(Guid id, CancellationToken ct = default);
         Task<List<T>> GetAllAsync(CancellationToken ct = default);
         Task<List<T>> FindAsync(Func<T, bool> predicate, CancellationToken ct = default);
+        Task<string> UploadAsync(Stream content, string fileName, CancellationToken ct = default);
     }
 
     public class DatabaseService<T> : IDatabaseService<T> where T : class
     {
         private readonly IGenericRepository<T> _repository;
+        private readonly Azure.Storage.Blobs.BlobServiceClient? _blobServiceClient;
 
         public DatabaseService(DatabaseProvider provider, IServiceProvider serviceProvider)
         {
             _repository = DatabaseFactory.CreateRepository<T>(provider, serviceProvider);
+            _blobServiceClient = serviceProvider.GetService<Azure.Storage.Blobs.BlobServiceClient>();
         }
 
         public async Task<T?> GetByIdAsync(Guid id, CancellationToken ct = default) => 
@@ -94,5 +97,25 @@ namespace drTech_backend.Infrastructure.Abstractions
 
         public async Task<List<T>> FindAsync(Func<T, bool> predicate, CancellationToken ct = default) => 
             await _repository.FindAsync(predicate, ct);
+
+        public async Task<string> UploadAsync(Stream content, string fileName, CancellationToken ct = default)
+        {
+            if (_blobServiceClient == null)
+            {
+                // fallback: store locally under uploads and return file path
+                var uploads = Path.Combine(Directory.GetCurrentDirectory(), "uploads");
+                Directory.CreateDirectory(uploads);
+                var path = Path.Combine(uploads, fileName);
+                using var fs = new FileStream(path, FileMode.Create);
+                await content.CopyToAsync(fs, ct);
+                return path;
+            }
+
+            var container = _blobServiceClient.GetBlobContainerClient("payment-verification");
+            await container.CreateIfNotExistsAsync(cancellationToken: ct);
+            var blob = container.GetBlobClient(fileName);
+            await blob.UploadAsync(content, overwrite: true, cancellationToken: ct);
+            return blob.Uri.ToString();
+        }
     }
 }

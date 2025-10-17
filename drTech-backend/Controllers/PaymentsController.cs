@@ -51,12 +51,12 @@ namespace drTech_backend.Controllers
 
             if (request.Proof != null && request.Proof.Length > 0)
             {
-                var uploads = Path.Combine(Directory.GetCurrentDirectory(), "uploads");
-                Directory.CreateDirectory(uploads);
-                var path = Path.Combine(uploads, payment.Id + Path.GetExtension(request.Proof.FileName));
-                using var fs = new FileStream(path, FileMode.Create);
-                await request.Proof.CopyToAsync(fs, cancellationToken);
-                payment.ProofUrl = path;
+                var fileName = payment.Id + Path.GetExtension(request.Proof.FileName);
+                await using var stream = request.Proof.OpenReadStream();
+                // Reuse existing database service for cross-provider consistency
+                var db = HttpContext.RequestServices.GetRequiredService<drTech_backend.Infrastructure.Abstractions.IDatabaseService<Domain.Entities.Payment>>();
+                var url = await db.UploadAsync(stream, fileName, cancellationToken);
+                payment.ProofUrl = url;
             }
 
 			await _mediator.Send(new CreateCommand<Domain.Entities.Payment>(payment), cancellationToken);

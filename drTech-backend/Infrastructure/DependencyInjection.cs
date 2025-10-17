@@ -195,6 +195,13 @@ namespace drTech_backend.Infrastructure
             // Auth services
             services.AddScoped<IJwtTokenService, JwtTokenService>();
 
+            // Azure Blob Storage
+            var azureConn = configuration["AZURE_STORAGE_CONNECTION_STRING"] ?? configuration.GetConnectionString("AzureStorage");
+            if (!string.IsNullOrWhiteSpace(azureConn))
+            {
+                services.AddSingleton(new Azure.Storage.Blobs.BlobServiceClient(azureConn));
+            }
+
             // Mongo
             services.Configure<Mongo.MongoSettings>(configuration.GetSection("Mongo"));
             services.AddSingleton<Mongo.IMongoContext, Mongo.MongoContext>();
